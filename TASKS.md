@@ -1,0 +1,38 @@
+﻿# Tasks - cocm-pediatrico-honduras
+
+## Status Key
+- [ ] Not started
+- [~] In progress
+- [x] Complete
+- [!] Blocked - include reason in parentheses
+
+## Active Tasks
+- [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
+- [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
+
+## Upcoming
+- [ ] Re-check Apps Script deployment facts: active `/exec` URL, deployment mode, current version.
+- [ ] Verify whether `REG_DEFAULT_APPS_SCRIPT_URL` in `_registro-wip/registro-data.js` matches the active Apps Script deployment.
+- [ ] Verify whether known `Medicamentos` column drift is still unresolved.
+- [ ] Verify whether `Visitas_Test` is still missing `Entry_Type`.
+- [ ] Verify whether `Pacientes_Test` still has the `Caregiver_Phone` / `Review_Flag_Note` column-order swap.
+- [ ] Verify `Subscale_Score` vs `Subscale_Scores` naming across front end, Apps Script, and Sheet header.
+- [ ] Decide on Cloudflare Pages migration.
+- [ ] Decide whether Drive folder per patient is still desired.
+- [ ] Update audit/help text in `registro-i18n.js` for patient page med Edit button and Suggestions section.
+- [ ] Resolve `_registro-wip/_headers` anomaly.
+- [ ] Review undocumented `make_placeholders.py`.
+- [ ] Verify the pediatric psychometric `TOOL_URLS` map against root scoring files and external `*-ext.html` variants.
+- [ ] Verify PSC-17 patient-creation share-message behavior and copy output.
+- [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
+
+## Completed (last 30 days)
+- [x] Read-only audit confirmed local repo was clean on `main` and matched `origin/main` at `365900f2327311f92c9d9328691fa772b486ce73`.
+- [x] Repo-level evidence matched Cloudflare Access and Apps Script assumptions documented in Notion.
+- [x] Documented rollback model across GitHub, Cloudflare, Apps Script, and Google Sheets.
+- [x] Confirmed `_registro-wip/` as the working directory correction.
+
+## Backlog
+- [ ] Fix Aurora/Auora patient name typo via Edit Patient UI when safely accessing that record.
+- [ ] Audit `Auditoria` for any client writes that attempted fields dropped by schema drift.
+- [ ] Keep token/domain expiry tracking current outside of code changes.
