@@ -39,3 +39,9 @@ Context: The pediatric screening tools are not just standalone questionnaires; t
 Decision: Keep CoCM pediatric psychometrics documentation in `cocm-pediatrico-honduras` rather than moving it to the general `psychometrics-hub`.
 Rationale: The registry integration determines when tools appear, how results are copied, and how screening fits clinical workflow.
 Consequences: The general psychometrics hub can remain a public/shareable tool hub, while CoCM-specific screening rules and implementation notes stay with the protected production track.
+
+### 2026-05-22 - Explain Repo Work With Beginner Context
+Context: Dr. Fowler is new to Git, GitHub, GitHub Desktop, Codex, and local-vs-remote repository workflows.
+Decision: Codex should explain repo work with extra beginner-friendly context by default, including definitions, why each step matters, exact local paths/button names when useful, and a clear distinction between local files, local commits, pushed GitHub commits, pull requests, and deployed site changes.
+Rationale: Better context reduces accidental duplicate clones, OneDrive/Git confusion, and uncertainty about whether work is local, synced, or live.
+Consequences: Future repo instructions and shutdown summaries should favor plain outcome language and step-by-step guidance over unexplained Git shorthand.

@@ -60,6 +60,15 @@ Append entries to WORKLOG.md using this shape:
 - Do not store secrets, tokens, credentials, private keys, or unnecessary sensitive data in repo docs.
 - Preserve user or prior-Codex changes that are already in the working tree.
 
+## Owner Communication
+- The repo owner is new to Git, GitHub, GitHub Desktop, Codex, local-vs-remote repository concepts, commits, branches, remotes, pushes, pulls, and deployment workflows.
+- When explaining repo work, include a little extra context by default: define the concept, explain why it matters, then give the specific instruction or recommendation.
+- Use plain outcome language before technical terms. For example, say "this saves the change in local history" before or alongside "commit."
+- Distinguish clearly between local files, local commits, pushed GitHub commits, pull requests, and live deployed website changes.
+- Give step-by-step instructions with exact paths, button names, branch names, and GitHub URLs when the user is operating tools manually.
+- Recommend the simplest safe option first, and name when an action is optional versus required.
+- Avoid implying the live website changed unless changes were actually pushed and deployed.
+
 ## Project-Specific Rules
 - Keep CoCM separate from TroyFowlerMD portfolio cleanup.
 - Before code changes, capture rollback state for GitHub, Cloudflare, Apps Script, and Google Sheets schema.
