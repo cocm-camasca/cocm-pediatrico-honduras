@@ -9,7 +9,6 @@
 ## Active Tasks
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
-- [~] Publish and production-retest the patient-page stability fixes on the protected host, including visit dialogs, score-only modal state reset, and score-trend/history controls.
 
 ## Upcoming
 - [ ] Re-check Apps Script deployment facts: active `/exec` URL, deployment mode, current version.
@@ -35,6 +34,7 @@
 - [x] Fixed the `_registro-wip/registro-paciente.js` `Visit + Score` recursion bug caused by the exported `addVisitToolRow` wrapper calling itself.
 - [x] Synced `_registro-wip/registro-paciente.html` asset query strings from stale `20e55f1` values to `85d5c82`.
 - [x] Filtered blank live `Sugerencias` rows before rendering and normalized open-status handling for values such as `Nuevo`.
+- [x] Published and protected-host retested the patient-page stability fixes for visit dialogs, score-only modal reset, and score-trend/history controls.
 
 ## Backlog
 - [ ] Fix Aurora/Auora patient name typo via Edit Patient UI when safely accessing that record.

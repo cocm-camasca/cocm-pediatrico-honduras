@@ -44,3 +44,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm the live page shows PHQ-A/GAD-7 trend cards for affected patients and the new history-card button opens the score-only modal correctly.
 - Blockers/notes: Live verification depends on the Cloudflare Access-protected production host because local static loads do not exercise the Apps Script-backed patient data path.
 
+### 2026-06-22 - Codex desktop - Protected-host verification of patient-page trend fix
+- Completed: Pushed `main` to GitHub at `4ed859b` and confirmed the protected patient page loaded `style.css`, `registro-i18n.js`, `registro-data.js`, and `registro-paciente.js` with the new `?v=20260622d` asset versions.
+- Completed: Verified on `https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id=CCM-0051` that `Trends by tool` now renders PHQ-A and GAD-7 cards with sparklines derived from the existing score-only history rows.
+- Completed: Verified the visit/score history card now shows both `📊 Log score only` and `+ Log visit` actions on the live protected host.
+- In progress: No additional maintenance-request work remains from this turn unless a new patient-specific visualization edge case appears during user testing.
+- Blockers/notes: This verification used the protected host directly after a cache-busted reload because Cloudflare Access and GitHub Pages caching can otherwise preserve older patient-page HTML.
+
