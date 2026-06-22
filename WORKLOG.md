@@ -72,3 +72,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm the live page no longer shows focus-outline/help-cursor behavior on dots and only shows the hover hint when point data exists.
 - Blockers/notes: This is a UI affordance cleanup only; it does not change patient data, score math, or chart ordering.
 
+### 2026-06-22 - Codex desktop - Protected-host verification of tooltip cleanup
+- Completed: Pushed `main` to GitHub at `c989a72` and confirmed the protected patient page loaded `style.css`, `registro-i18n.js`, `registro-data.js`, and `registro-paciente.js` with the new `?v=20260622f` asset versions.
+- Completed: Verified on `https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id=CCM-0051` that trend-point wrappers no longer render `tabindex` or `cursor:help`, so the prior click-outline/help-cursor behavior is gone.
+- Completed: Verified the live `Trends by tool` header now includes the hover hint on a patient with actual plotted trend data, and the point tooltip text remains intact.
+- In progress: The no-data branch was implemented in code but not separately exercised against a second live patient record during this pass.
+- Blockers/notes: This retest used the protected host directly after a cache-busted reload and inspected the rendered DOM to confirm the removed focus/help affordances.
+
