@@ -1,4 +1,4 @@
-// @version 85d5c82
+// @version 20260622c
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -2354,12 +2354,21 @@ function openScoreModal() {
       <div style="font-size:10.5px;color:var(--color-text-muted);margin-top:4px;font-style:italic;">${en?'Tip: wrap text in **bold** or *italic* for emphasis.':'Consejo: usa **negrita** o *cursiva* para resaltar.'}</div>
     </div>
   `;
+  resetScoreSaveButton();
   host.style.display = 'flex';
   setTimeout(() => document.getElementById('sScore')?.focus(), 50);
+}
+function resetScoreSaveButton() {
+  const btn = document.getElementById('scoreSaveBtn');
+  if (!btn) return;
+  const en = getLang() === 'en';
+  btn.disabled = false;
+  btn.textContent = en ? 'Save' : 'Guardar';
 }
 function closeScoreModal() {
   const m = document.getElementById('scoreModal');
   if (m) m.style.display = 'none';
+  resetScoreSaveButton();
 }
 async function submitScore() {
   const btn = document.getElementById('scoreSaveBtn');

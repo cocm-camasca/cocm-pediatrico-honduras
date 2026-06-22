@@ -30,3 +30,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Post-push production retest is still needed on the protected host to confirm the live patient page loads the updated asset bundle and the live suggestions list no longer shows placeholder rows.
 - Blockers/notes: Local static preview could load the pages, but Apps Script-backed registry flows did not fully initialize off-host, so full browser verification of the registry interaction remains pending a published deployment on the protected domain.
 
+### 2026-06-22 - Codex desktop - Score-only modal save-button reset
+- Completed: Reproduced a live patient-page issue where the `Log score only` modal reopened with the save button stuck on `Saving…` after a prior successful score submission.
+- Completed: Reset `scoreSaveBtn` on score-modal open/close in `_registro-wip/registro-paciente.js` so the modal does not inherit disabled text state from the previous submission.
+- Completed: Bumped `_registro-wip/registro-paciente.html` patient-page asset query strings to `20260622c` so the protected host loads the updated modal-reset logic.
+- In progress: Live retest is needed after push to confirm repeated `Log score only` opens work without a page refresh.
+- Blockers/notes: This is a state-reset bug in the reused modal container, not a write-path failure in Apps Script or Sheets.
+
