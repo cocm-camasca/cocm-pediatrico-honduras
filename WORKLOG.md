@@ -93,3 +93,9 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: No additional work remains from this medication-reason request unless the custom-condition fallback should be narrowed further.
 - Blockers/notes: This retest used the protected live modal directly and confirmed there were no console warnings or errors during the modal open.
 
+### 2026-06-22 - Codex desktop - Suppress test diagnosis med-reason fallback
+- Completed: Narrowed the add-medication reason-checkbox fallback so placeholder test labels such as `Test Dx` are excluded while other patient-specific custom diagnoses still remain eligible.
+- Completed: Kept the standard `Anxiety`, `Depression`, `ADHD`, and `PTSD` reason options unchanged and bumped patient-page assets to `20260622h`.
+- In progress: Protected-host retest is needed after push to confirm the live `Log medication` modal now shows `on` without the `Test Dx` checkbox on this patient.
+- Blockers/notes: This change is intentionally narrow and does not alter the patient condition display elsewhere on the page.
+

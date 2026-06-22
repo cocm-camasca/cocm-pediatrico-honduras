@@ -1,4 +1,4 @@
-// @version 20260622g
+// @version 20260622h
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -1463,11 +1463,17 @@ function openMedModal() {
     if (['anxiety', 'depression', 'adhd', 'ptsd'].includes(key)) return [key];
     return [];
   };
+  const isSuppressedMedReasonLabel = (condKey, label) => {
+    const normKey = String(condKey || '').toLowerCase().replace(/[\s_-]+/g, '');
+    const normLabel = String(label || '').toLowerCase().replace(/[\s_-]+/g, '');
+    return normKey === 'testdx' || normLabel === 'testdx';
+  };
   const extraReasonLabels = [];
   patientConds.forEach(c => {
     if (normalizeMedReasonCond(c).length) return;
     const d = (PSTATE.conditions && PSTATE.conditions[c]) || null;
     const lbl = d ? (en ? d.en : d.es) : c;
+    if (isSuppressedMedReasonLabel(c, lbl)) return;
     if (!lbl || standardReasonLabels.has(lbl) || extraReasonLabels.includes(lbl)) return;
     extraReasonLabels.push(lbl);
   });
