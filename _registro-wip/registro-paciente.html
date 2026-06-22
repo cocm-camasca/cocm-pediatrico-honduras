@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CoCM Camasca — Paciente</title>
-  <link rel="stylesheet" href="style.css?v=20260622h" />
+  <link rel="stylesheet" href="style.css?v=20260622i" />
   <style>
     /* ── User-adjustable zoom (A− / A+) ── */
     .app-layout.no-sidebar { zoom: var(--reg-scale, 1); }
@@ -695,8 +695,36 @@
 <!-- Toast host -->
 <div id="regToastHost"></div>
 
-<script src="registro-i18n.js?v=20260622h"></script>
-<script src="registro-data.js?v=20260622h"></script>
-<script src="registro-paciente.js?v=20260622h"></script>
+<script src="registro-i18n.js?v=20260622i"></script>
+<script src="registro-data.js?v=20260622i"></script>
+<script src="registro-paciente.js?v=20260622i"></script>
+<script>
+(() => {
+  const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;
+
+  function sanitizeMedicationReasonCheckboxes() {
+    const wrap = document.getElementById('mReasonConds');
+    if (!wrap) return;
+    [...wrap.querySelectorAll('label')].forEach(label => {
+      const text = (label.textContent || '').replace(/\s+/g, ' ').trim();
+      if (suppressedMedReasonLabel.test(text)) label.remove();
+    });
+  }
+
+  const medForm = document.getElementById('medForm');
+  if (medForm) {
+    new MutationObserver(() => sanitizeMedicationReasonCheckboxes()).observe(medForm, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', sanitizeMedicationReasonCheckboxes, { once: true });
+  } else {
+    sanitizeMedicationReasonCheckboxes();
+  }
+})();
+</script>
 </body>
 </html>

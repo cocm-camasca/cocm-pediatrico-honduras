@@ -99,3 +99,9 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm the live `Log medication` modal now shows `on` without the `Test Dx` checkbox on this patient.
 - Blockers/notes: This change is intentionally narrow and does not alter the patient condition display elsewhere on the page.
 
+### 2026-06-22 - Codex desktop - HTML-side medication reason sanitizer
+- Completed: Added a tiny patient-page HTML sanitizer that removes `Test Dx` from the add-medication reason checkbox list after the modal form renders.
+- Completed: Bumped patient-page asset URLs to `20260622i` so the protected host is forced onto a fresh HTML/JS bundle for this medication-modal fix.
+- In progress: Protected-host retest is needed after push to confirm the live modal now shows the standard four reasons plus `on`, without `Test Dx`.
+- Blockers/notes: This HTML-side safeguard is intentionally narrow and only touches the add-medication checkbox list; it does not change the patient header’s condition display.
+
