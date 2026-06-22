@@ -1,4 +1,4 @@
-// @version 20260622c
+// @version 20260622d
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -175,7 +175,7 @@ function render() {
     return `<span class="cond-chip">${d ? (lang==='en'?d.en:d.es) : c}</span>`;
   }).join(' ');
 
-  const toolKeys = (p.Tools||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const toolKeys = getTrendToolKeys(p);
   const safetyActive = p.Safety_Flag==='TRUE' && !p.Safety_Flag_Ack_At;
 
   // Last-visit nudge
@@ -340,7 +340,8 @@ function render() {
       <h2>
         <span>${t('visit_score_history')}</span>
         <span style="font-size: var(--text-sm); color: var(--color-text-muted); font-weight: 400;">${PSTATE.visits.length} ${PSTATE.visits.length === 1 ? t('visit_singular') : t('visits')}</span>
-        <button data-log-chooser-anchor="1" data-log-chooser-id="hist" aria-haspopup="menu" aria-expanded="false" onclick="openLogChooser(event)" style="margin-left:auto;font-size:var(--text-xs);padding:4px 10px;border-radius:var(--radius-md);background:var(--color-surface-offset);border:1px solid var(--color-border);color:var(--color-text-muted);cursor:pointer;font-weight:600;" title="${getLang()==='en' ? 'Log a visit (with or without a psychometric score)' : 'Registrar visita (con o sin puntaje)'}">+ ${getLang()==='en'?'Log visit':'Registrar visita'} <span style="font-size:9px;opacity:0.7;margin-left:2px;">▾</span></button>
+        <button onclick="openScoreModal()" style="margin-left:auto;font-size:var(--text-xs);padding:4px 10px;border-radius:var(--radius-md);background:var(--color-surface-offset);border:1px solid var(--color-border);color:var(--color-text-muted);cursor:pointer;font-weight:600;" title="${getLang()==='en' ? 'Log a score without a visit' : 'Registrar puntaje sin visita'}">📊 ${getLang()==='en'?'Log score only':'Solo puntaje'}</button>
+        <button data-log-chooser-anchor="1" data-log-chooser-id="hist" aria-haspopup="menu" aria-expanded="false" onclick="openLogChooser(event)" style="font-size:var(--text-xs);padding:4px 10px;border-radius:var(--radius-md);background:var(--color-surface-offset);border:1px solid var(--color-border);color:var(--color-text-muted);cursor:pointer;font-weight:600;" title="${getLang()==='en' ? 'Log a visit (with or without a psychometric score)' : 'Registrar visita (con o sin puntaje)'}">+ ${getLang()==='en'?'Log visit':'Registrar visita'} <span style="font-size:9px;opacity:0.7;margin-left:2px;">▾</span></button>
       </h2>
       ${renderVisits(lang)}
     </div>
@@ -703,26 +704,43 @@ function renderPrompts(p, lang) {
   `;
 }
 
+function hasNumericScoreValue(value) {
+  if (value === '' || value == null) return false;
+  return !Number.isNaN(Number(value));
+}
+
+function getTrendToolKeys(patient) {
+  const configuredTools = (patient?.Tools || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const scoredVisitTools = (PSTATE.visits || [])
+    .filter(v => v && v.Tool && hasNumericScoreValue(v.Score))
+    .map(v => String(v.Tool).trim())
+    .filter(Boolean);
+  return [...new Set([...configuredTools, ...scoredVisitTools])];
+}
+
 function renderTrends(toolKeys, lang) {
   if (!toolKeys.length) return `<p style="color:var(--color-text-muted);">—</p>`;
   return toolKeys.map(tool => {
-    const visits = PSTATE.visits.filter(v => v.Tool===tool).slice().reverse();
-    const latest = visits[visits.length-1];
-    const baseline = visits[0];
+    const scoredVisits = PSTATE.visits
+      .filter(v => v.Tool===tool && hasNumericScoreValue(v.Score))
+      .slice()
+      .reverse();
+    const latest = scoredVisits[scoredVisits.length-1];
+    const baseline = scoredVisits[0];
     const cutoffs = PSTATE.tools[tool];
     const tier = latest ? scoreToTier(latest.Score, cutoffs) : 'Sin datos';
     const tierLbl = translateTier(tier);
     const tierCls = TIER_CLASS[tier]?.replace('tier-','') || 'nodata';
     const delta = (latest && baseline) ? (Number(latest.Score) - Number(baseline.Score)) : null;
     const deltaStr = delta == null ? '—' : (delta > 0 ? `+${delta}` : `${delta}`);
-    const values = visits.map(v => Number(v.Score)).filter(x => !isNaN(x));
+    const values = scoredVisits.map(v => Number(v.Score));
     return `
       <div class="trend-card">
         <h3><span>${tool}</span><span class="tool-badge tier-${tierCls}">${tierLbl}</span></h3>
         <div class="trend-score">${latest ? latest.Score : '—'}
           ${delta!=null ? `<span style="font-size: var(--text-sm); margin-left: 8px; color: ${delta<0?'var(--color-success)':delta>0?'var(--color-error)':'var(--color-text-muted)'};">${deltaStr}</span>` : ''}
         </div>
-        <div class="trend-sub">${visits.length} ${t('visits')} · ${t('baseline_short')} ${baseline?baseline.Score:'—'}</div>
+        <div class="trend-sub">${scoredVisits.length} ${t('visits')} · ${t('baseline_short')} ${baseline?baseline.Score:'—'}</div>
         ${bigSparkline(values, cutoffs)}
       </div>
     `;

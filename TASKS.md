@@ -9,7 +9,7 @@
 ## Active Tasks
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
-- [~] Publish and production-retest the visit-dialog and suggestions-page stability fixes on the protected host.
+- [~] Publish and production-retest the patient-page stability fixes on the protected host, including visit dialogs, score-only modal state reset, and score-trend/history controls.
 
 ## Upcoming
 - [ ] Re-check Apps Script deployment facts: active `/exec` URL, deployment mode, current version.
