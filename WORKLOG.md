@@ -86,3 +86,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm the live `Log medication` modal shows the corrected checkbox list for affected patients.
 - Blockers/notes: This change only affects the add-medication modal; edit-medication remains a free-text reason field as before.
 
+### 2026-06-22 - Codex desktop - Protected-host verification of medication reason options
+- Completed: Pushed `main` to GitHub at `62dd106` and confirmed the protected patient page loaded `style.css`, `registro-i18n.js`, `registro-data.js`, and `registro-paciente.js` with the new `?v=20260622g` asset versions.
+- Completed: Verified in the live `Log medication` modal on `https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id=CCM-0051` that the reason checkboxes now render `Anxiety`, `Depression`, `ADHD`, and `PTSD` first.
+- Completed: Verified that patient-specific nonstandard conditions are still appended afterward for this record (`on`, `Test Dx`) and that the `Additional reason (optional)` free-text box remains in place.
+- In progress: No additional work remains from this medication-reason request unless the custom-condition fallback should be narrowed further.
+- Blockers/notes: This retest used the protected live modal directly and confirmed there were no console warnings or errors during the modal open.
+
