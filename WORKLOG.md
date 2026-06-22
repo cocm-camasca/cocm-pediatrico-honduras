@@ -65,3 +65,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: No additional work remains from this tooltip request unless user testing shows the native hover behavior needs a custom styled tooltip instead.
 - Blockers/notes: The tooltip text is implemented with native SVG `title` elements, which is the lowest-risk option for this protected production page and depends on the browser's default hover rendering.
 
+### 2026-06-22 - Codex desktop - Tooltip affordance cleanup
+- Completed: Removed the trend-point focusable/clickable wrapper state so clicking a chart dot no longer produces an unnecessary focus outline.
+- Completed: Removed the help-cursor behavior from trend points while keeping the native hover tooltip text in place.
+- Completed: Added a bilingual `Trends by tool` hover hint that renders only when the card contains actual plotted point data, then bumped patient-page assets to `20260622f`.
+- In progress: Protected-host retest is needed after push to confirm the live page no longer shows focus-outline/help-cursor behavior on dots and only shows the hover hint when point data exists.
+- Blockers/notes: This is a UI affordance cleanup only; it does not change patient data, score math, or chart ordering.
+

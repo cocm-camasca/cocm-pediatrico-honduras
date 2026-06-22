@@ -253,6 +253,7 @@ const REG_I18N = {
   pat_change_tool: { es: 'cambiar',            en: 'change' },
   pat_complete_tool: { es: 'Completar herramienta', en: 'Complete a tool' },
   pat_trends_by_tool: { es: 'Tendencias por herramienta', en: 'Trends by tool' },
+  pat_trends_hover_hint: { es: 'Pase el mouse sobre un punto para ver fecha y puntaje', en: 'Hover over a point to see date and score' },
   pat_visit_history: { es: 'Historial de visitas', en: 'Visit history' },
   visit_score_history: { es: 'Historial de visitas / puntajes', en: 'Visit / Score history' },
   score_col_label:     { es: 'Puntaje', en: 'Score' },

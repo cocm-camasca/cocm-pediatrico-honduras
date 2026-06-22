@@ -1,4 +1,4 @@
-// @version 20260622e
+// @version 20260622f
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -177,6 +177,7 @@ function render() {
 
   const toolKeys = getTrendToolKeys(p);
   const safetyActive = p.Safety_Flag==='TRUE' && !p.Safety_Flag_Ack_At;
+  const showTrendHoverHint = hasTrendPointData(toolKeys);
 
   // Last-visit nudge
   const lastVisit = PSTATE.visits[0];
@@ -329,7 +330,10 @@ function render() {
 
     <!-- TRENDS -->
     <div class="sec-card">
-      <h2><span>${t('pat_trends_by_tool')}</span></h2>
+      <h2>
+        <span>${t('pat_trends_by_tool')}</span>
+        ${showTrendHoverHint ? `<span style="font-size:var(--text-xs);color:var(--color-text-muted);font-weight:400;">${t('pat_trends_hover_hint')}</span>` : ''}
+      </h2>
       <div class="trend-grid">
         ${renderTrends(toolKeys, lang)}
       </div>
@@ -718,6 +722,12 @@ function getTrendToolKeys(patient) {
   return [...new Set([...configuredTools, ...scoredVisitTools])];
 }
 
+function hasTrendPointData(toolKeys) {
+  return (toolKeys || []).some(tool => (
+    (PSTATE.visits || []).filter(v => v.Tool===tool && hasNumericScoreValue(v.Score)).length >= 2
+  ));
+}
+
 function renderTrends(toolKeys, lang) {
   if (!toolKeys.length) return `<p style="color:var(--color-text-muted);">—</p>`;
   return toolKeys.map(tool => {
@@ -849,12 +859,11 @@ function bigSparkline(points, cutoffs) {
   const color = last < first ? 'var(--color-success)' : last > first ? 'var(--color-error)' : 'var(--color-text-muted)';
   const circles = points.map((point, i) => {
     const tooltip = escapeHtml(`${point.date || '—'} · ${en ? 'Score' : 'Puntaje'} ${point.score ?? '—'}`);
-    return `<g tabindex="0" style="cursor:help;">
+    return `<g>
+      <title>${tooltip}</title>
       <circle cx="${xScale(i)}" cy="${yScale(point.value)}" r="7" fill="transparent">
-        <title>${tooltip}</title>
       </circle>
       <circle cx="${xScale(i)}" cy="${yScale(point.value)}" r="3" fill="${color}" stroke="var(--color-surface)" stroke-width="1">
-        <title>${tooltip}</title>
       </circle>
     </g>`;
   }).join('');
