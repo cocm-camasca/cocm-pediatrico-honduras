@@ -105,3 +105,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm the live modal now shows the standard four reasons plus `on`, without `Test Dx`.
 - Blockers/notes: This HTML-side safeguard is intentionally narrow and only touches the add-medication checkbox list; it does not change the patient header’s condition display.
 
+### 2026-06-22 - Codex desktop - Protected-host verification of test-dx suppression
+- Completed: Pushed `main` to GitHub at `d6e3284` and rechecked the protected `Log medication` modal on `https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id=CCM-0051`.
+- Completed: Verified the visible medication-reason checkbox list now shows `Anxiety`, `Depression`, `ADHD`, `PTSD`, and `on`, with `Test Dx` removed.
+- Completed: Verified the `Additional reason (optional)` free-text field remains available and there were no console warnings or errors during the modal retest.
+- In progress: The protected host was still advertising the earlier `20260622h` asset URLs during this retest, but the published sanitizer logic was already affecting the rendered modal output correctly.
+- Blockers/notes: This fix removes `Test Dx` only from the add-medication reason checkbox list; it does not remove `Test Dx` from the patient header’s conditions display.
+
