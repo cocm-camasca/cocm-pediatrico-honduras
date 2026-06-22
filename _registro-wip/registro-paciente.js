@@ -1,4 +1,4 @@
-// @version 20260622f
+// @version 20260622g
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -1447,9 +1447,35 @@ if (typeof window !== 'undefined') {
 function openMedModal() {
   const en = getLang()==='en';
   const patientConds = (PSTATE.patient.Conditions||'').split(',').map(s=>s.trim()).filter(Boolean);
-  const condCheckboxes = patientConds.map(c => {
+  const standardReasonDefs = [
+    { key: 'anxiety', label: t('med_reason_anxiety') },
+    { key: 'depression', label: t('med_reason_depression') },
+    { key: 'adhd', label: t('med_reason_adhd') },
+    { key: 'ptsd', label: t('med_reason_ptsd') },
+  ];
+  const standardReasonLabels = new Set(standardReasonDefs.map(item => item.label));
+  const normalizeMedReasonCond = (condKey) => {
+    const key = String(condKey || '').trim().toLowerCase();
+    if (!key) return [];
+    if (key === 'mdd_gad') return ['depression', 'anxiety'];
+    if (key === 'social_anxiety') return ['anxiety'];
+    if (key === 'trauma') return ['ptsd'];
+    if (['anxiety', 'depression', 'adhd', 'ptsd'].includes(key)) return [key];
+    return [];
+  };
+  const extraReasonLabels = [];
+  patientConds.forEach(c => {
+    if (normalizeMedReasonCond(c).length) return;
     const d = (PSTATE.conditions && PSTATE.conditions[c]) || null;
     const lbl = d ? (en ? d.en : d.es) : c;
+    if (!lbl || standardReasonLabels.has(lbl) || extraReasonLabels.includes(lbl)) return;
+    extraReasonLabels.push(lbl);
+  });
+  const allReasonLabels = [
+    ...standardReasonDefs.map(item => item.label),
+    ...extraReasonLabels,
+  ];
+  const condCheckboxes = allReasonLabels.map(lbl => {
     return `<label style="display:inline-flex;gap:4px;align-items:center;padding:4px 10px;background:var(--color-surface-offset);border-radius:var(--radius-full);font-size:var(--text-xs);cursor:pointer;"><input type="checkbox" class="mReasonCond" value="${escapeHtml(lbl)}"/>${lbl}</label>`;
   }).join('');
 

@@ -79,3 +79,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: The no-data branch was implemented in code but not separately exercised against a second live patient record during this pass.
 - Blockers/notes: This retest used the protected host directly after a cache-busted reload and inspected the rendered DOM to confirm the removed focus/help affordances.
 
+### 2026-06-22 - Codex desktop - Medication reason checkbox cleanup
+- Completed: Updated the patient-page medication modal so the reason checkboxes always include Anxiety, Depression, ADHD, and PTSD in a fixed clinical order.
+- Completed: Preserved the existing patient-specific fallback logic by appending additional nonstandard condition labels, such as custom “other” diagnoses, after the standard reason options.
+- Completed: Kept the separate free-text medication reason input and bumped patient-page asset query strings to `20260622g`.
+- In progress: Protected-host retest is needed after push to confirm the live `Log medication` modal shows the corrected checkbox list for affected patients.
+- Blockers/notes: This change only affects the add-medication modal; edit-medication remains a free-text reason field as before.
+
