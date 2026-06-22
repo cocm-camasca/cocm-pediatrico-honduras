@@ -58,3 +58,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: Protected-host retest is needed after push to confirm live chart points expose the expected date-and-score tooltip text.
 - Blockers/notes: This is a front-end-only chart affordance change; it does not alter Apps Script writes or Google Sheet data.
 
+### 2026-06-22 - Codex desktop - Protected-host verification of trend-point tooltips
+- Completed: Pushed `main` to GitHub at `528772e` and confirmed the protected patient page loaded `style.css`, `registro-i18n.js`, `registro-data.js`, and `registro-paciente.js` with the new `?v=20260622e` asset versions.
+- Completed: Verified on `https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id=CCM-0051` that PHQ-A and GAD-7 trend points now expose date-and-score tooltip text such as `2026-06-22 · Score 9` and `2026-06-22 · Score 20`.
+- Completed: Reconfirmed the patient page finished loading without console warnings or errors during this tooltip retest.
+- In progress: No additional work remains from this tooltip request unless user testing shows the native hover behavior needs a custom styled tooltip instead.
+- Blockers/notes: The tooltip text is implemented with native SVG `title` elements, which is the lowest-risk option for this protected production page and depends on the browser's default hover rendering.
+
