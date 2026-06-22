@@ -226,7 +226,7 @@ let SUG_STATE = { team: [], suggestions: [] };
 
 function hasSuggestionContent(row) {
   if (!row || typeof row !== 'object') return false;
-  return ['Suggestion_ID', 'Timestamp', 'Submitter', 'Category', 'Description', 'Status']
+  return ['Suggestion_ID', 'Timestamp', 'Submitter', 'Category', 'Description']
     .some((key) => String(row[key] || '').trim() !== '');
 }
 
