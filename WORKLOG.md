@@ -51,3 +51,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: No additional maintenance-request work remains from this turn unless a new patient-specific visualization edge case appears during user testing.
 - Blockers/notes: This verification used the protected host directly after a cache-busted reload because Cloudflare Access and GitHub Pages caching can otherwise preserve older patient-page HTML.
 
+### 2026-06-22 - Codex desktop - Trend-point hover details
+- Completed: Updated `_registro-wip/registro-paciente.js` so each trend-point dot carries a native hover/focus tooltip showing that point's date and score.
+- Completed: Added a larger invisible hover target around each dot so the tooltip is easier to trigger with a mouse without changing the visible chart design.
+- Completed: Bumped `_registro-wip/registro-paciente.html` patient-page asset query strings to `20260622e` for the tooltip change.
+- In progress: Protected-host retest is needed after push to confirm live chart points expose the expected date-and-score tooltip text.
+- Blockers/notes: This is a front-end-only chart affordance change; it does not alter Apps Script writes or Google Sheet data.
+

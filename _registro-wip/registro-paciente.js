@@ -1,4 +1,4 @@
-// @version 20260622d
+// @version 20260622e
 /* ============================================================
    CoCM Camasca — Patient detail page (streamlined)
    ============================================================ */
@@ -733,7 +733,11 @@ function renderTrends(toolKeys, lang) {
     const tierCls = TIER_CLASS[tier]?.replace('tier-','') || 'nodata';
     const delta = (latest && baseline) ? (Number(latest.Score) - Number(baseline.Score)) : null;
     const deltaStr = delta == null ? '—' : (delta > 0 ? `+${delta}` : `${delta}`);
-    const values = scoredVisits.map(v => Number(v.Score));
+    const points = scoredVisits.map(v => ({
+      value: Number(v.Score),
+      date: v.Visit_Date || '',
+      score: v.Score
+    }));
     return `
       <div class="trend-card">
         <h3><span>${tool}</span><span class="tool-badge tier-${tierCls}">${tierLbl}</span></h3>
@@ -741,14 +745,15 @@ function renderTrends(toolKeys, lang) {
           ${delta!=null ? `<span style="font-size: var(--text-sm); margin-left: 8px; color: ${delta<0?'var(--color-success)':delta>0?'var(--color-error)':'var(--color-text-muted)'};">${deltaStr}</span>` : ''}
         </div>
         <div class="trend-sub">${scoredVisits.length} ${t('visits')} · ${t('baseline_short')} ${baseline?baseline.Score:'—'}</div>
-        ${bigSparkline(values, cutoffs)}
+        ${bigSparkline(points, cutoffs)}
       </div>
     `;
   }).join('');
 }
 
-function bigSparkline(values, cutoffs) {
+function bigSparkline(points, cutoffs) {
   const en = getLang() === 'en';
+  const values = (points || []).map(pt => Number(pt.value)).filter(v => !Number.isNaN(v));
   // Single-point or no data: show placeholder message instead of chart
   if (!values || values.length < 2) {
     const msg = en ? 'Add another score to see trend' : 'Agregue otro puntaje para ver la tendencia';
@@ -842,7 +847,17 @@ function bigSparkline(values, cutoffs) {
   const pts = values.map((v,i) => `${xScale(i)},${yScale(v)}`);
   const last = values[values.length-1], first = values[0];
   const color = last < first ? 'var(--color-success)' : last > first ? 'var(--color-error)' : 'var(--color-text-muted)';
-  const circles = values.map((v,i) => `<circle cx="${xScale(i)}" cy="${yScale(v)}" r="3" fill="${color}" stroke="var(--color-surface)" stroke-width="1"/>`).join('');
+  const circles = points.map((point, i) => {
+    const tooltip = escapeHtml(`${point.date || '—'} · ${en ? 'Score' : 'Puntaje'} ${point.score ?? '—'}`);
+    return `<g tabindex="0" style="cursor:help;">
+      <circle cx="${xScale(i)}" cy="${yScale(point.value)}" r="7" fill="transparent">
+        <title>${tooltip}</title>
+      </circle>
+      <circle cx="${xScale(i)}" cy="${yScale(point.value)}" r="3" fill="${color}" stroke="var(--color-surface)" stroke-width="1">
+        <title>${tooltip}</title>
+      </circle>
+    </g>`;
+  }).join('');
 
   return `<svg class="big-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;">
     ${bands}
