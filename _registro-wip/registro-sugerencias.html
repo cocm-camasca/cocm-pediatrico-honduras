@@ -224,13 +224,28 @@ function setLang(lang) {
 
 let SUG_STATE = { team: [], suggestions: [] };
 
+function hasSuggestionContent(row) {
+  if (!row || typeof row !== 'object') return false;
+  return ['Suggestion_ID', 'Timestamp', 'Submitter', 'Category', 'Description', 'Status']
+    .some((key) => String(row[key] || '').trim() !== '');
+}
+
+function normalizeSuggestionStatus(status) {
+  const trimmed = String(status || '').trim();
+  const normalized = trimmed.toLowerCase();
+  if (!trimmed || normalized === 'open' || normalized === 'nuevo' || normalized === 'new') {
+    return { label: trimmed || 'open', isOpen: true };
+  }
+  return { label: trimmed, isOpen: false };
+}
+
 async function load() {
   const [config, suggestions] = await Promise.all([
     fetchTab('Config'),
     fetchTab('Sugerencias').catch(()=>[])
   ]);
   SUG_STATE.team = config.filter(r => r.Category==='team' && isActiveRow(r)).map(r => r.Key);
-  SUG_STATE.suggestions = suggestions;
+  SUG_STATE.suggestions = suggestions.filter(hasSuggestionContent);
   // Pre-fill submitter freetext if we remembered a user from the registry page
   const sInput = document.getElementById('sSubmitter');
   const savedUser = localStorage.getItem(REG_LS.USER) || localStorage.getItem('coCMCamasca.sug.submitter');
@@ -240,13 +255,18 @@ async function load() {
 
 function renderSugList() {
   const lang = document.documentElement.getAttribute('data-lang') || 'es';
-  const list = SUG_STATE.suggestions.slice().sort((a,b)=>String(b.Timestamp).localeCompare(String(a.Timestamp)));
+  const list = SUG_STATE.suggestions
+    .filter(hasSuggestionContent)
+    .slice()
+    .sort((a,b)=>String(b.Timestamp).localeCompare(String(a.Timestamp)));
   const el = document.getElementById('sugList');
   if (!list.length) {
     el.innerHTML = `<p style="color:var(--color-text-muted);">${lang==='en'?'No suggestions yet.':'Sin sugerencias aún.'}</p>`;
     return;
   }
-  el.innerHTML = list.slice(0, 20).map(s => `
+  el.innerHTML = list.slice(0, 20).map(s => {
+    const status = normalizeSuggestionStatus(s.Status);
+    return `
     <div class="existing-sug">
       <div style="font-family: ui-monospace, monospace; font-size: var(--text-xs); color: var(--color-text-muted);">${String(s.Timestamp||'').slice(0,10)}</div>
       <div>
@@ -254,9 +274,10 @@ function renderSugList() {
         <strong style="margin-left: 8px;">${escapeHtml(s.Submitter||'—')}</strong>
         <div style="margin-top: 4px; font-size: var(--text-sm);">${escapeHtml(s.Description||'').slice(0,200)}</div>
       </div>
-      <div class="${s.Status==='open'||s.Status===''?'sug-status-open':'sug-status-done'}">${s.Status||'open'}</div>
+      <div class="${status.isOpen?'sug-status-open':'sug-status-done'}">${escapeHtml(status.label)}</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function clearForm() {

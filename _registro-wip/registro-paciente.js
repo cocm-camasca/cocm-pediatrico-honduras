@@ -1164,7 +1164,7 @@ function openVisitModal() {
     </template>
   `;
   // Add first row with defaultTool preselected
-  addVisitToolRow(defaultTool);
+  addVisitToolRowImpl(defaultTool);
   const vm = document.getElementById('visitModal');
   if (!vm) {
     if (typeof showToast === 'function') showToast('Visit modal element missing in DOM. Please reload the page.', { variant: 'error' });
@@ -1182,7 +1182,7 @@ function openVisitModal() {
   }
 }
 
-function addVisitToolRow(preselect) {
+function addVisitToolRowImpl(preselect) {
   const host = document.getElementById('vToolRows');
   const tmpl = document.getElementById('vToolRowTmpl');
   if (!host || !tmpl) return;
@@ -1247,7 +1247,7 @@ function setVisitNoScoreMode(noScore) {
 if (typeof window !== 'undefined') {
   window.addVisitToolRow = function(preselect) {
     setVisitNoScoreMode(false); // clicking 'Add a tool' from no-score mode reverts it
-    return addVisitToolRow(preselect);
+    return addVisitToolRowImpl(preselect);
   };
   window.removeVisitToolRow = removeVisitToolRow;
   window.setVisitNoScoreMode = setVisitNoScoreMode;
