@@ -1219,6 +1219,21 @@ function renderPatientSections(list, lang) {
     html += renderTierBlock('', '', nonSafety, lang, { flat: true });
   }
   container.innerHTML = html;
+  sanitizeMobileDataLabels(container);
+}
+
+function sanitizeMobileDataLabels(root) {
+  if (!root) return;
+  root.querySelectorAll('td[data-label]').forEach(td => {
+    const label = td.getAttribute('data-label');
+    if (!label || !/[<>&]/.test(label)) return;
+    td.setAttribute('data-label', String(label)
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim());
+  });
 }
 
 // ── Feature-flag helpers for table column visibility ────────────

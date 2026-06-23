@@ -27,6 +27,7 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Fixed the protected registry mobile-card label rendering so translated header strings with `<br>` no longer appear as literal `<BR>` text on phone-sized views.
 - [x] Read-only audit confirmed local repo was clean on `main` and matched `origin/main` at `365900f2327311f92c9d9328691fa772b486ce73`.
 - [x] Repo-level evidence matched Cloudflare Access and Apps Script assumptions documented in Notion.
 - [x] Documented rollback model across GitHub, Cloudflare, Apps Script, and Google Sheets.

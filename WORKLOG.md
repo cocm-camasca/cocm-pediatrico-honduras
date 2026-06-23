@@ -112,3 +112,10 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - In progress: The protected host was still advertising the earlier `20260622h` asset URLs during this retest, but the published sanitizer logic was already affecting the rendered modal output correctly.
 - Blockers/notes: This fix removes `Test Dx` only from the add-medication reason checkbox list; it does not remove `Test Dx` from the patient header’s conditions display.
 
+### 2026-06-22 - Codex desktop - Registry mobile label sanitization
+- Completed: Reproduced on the protected live registry mobile view that card labels such as `Latest<BR>score`, `Last<BR>visit`, `Last therapist<BR>contact`, and `Last psych<BR>review` were rendering literal `<BR>` text.
+- Completed: Updated `_registro-wip/registro-app.js` to sanitize rendered `td[data-label]` values after the registry table is built so mobile cards receive plain-text labels while desktop table headers keep intentional HTML line breaks.
+- Completed: Bumped `_registro-wip/registro.html` to load `registro-app.js?v=20260622j` so the protected host requests the fresh mobile-label fix after publish.
+- In progress: Protected-host retest after push is needed to confirm the live mobile registry cards no longer show literal `<BR>` text.
+- Blockers/notes: Focused mobile review of the current registry tab did not reveal a second low-risk regression that clearly belonged in the same production publish.
+
