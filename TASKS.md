@@ -9,6 +9,7 @@
 ## Active Tasks
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
+- [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
 
 ## Upcoming
 - [ ] Re-check Apps Script deployment facts: active `/exec` URL, deployment mode, current version.

@@ -116,6 +116,8 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: Reproduced on the protected live registry mobile view that card labels such as `Latest<BR>score`, `Last<BR>visit`, `Last therapist<BR>contact`, and `Last psych<BR>review` were rendering literal `<BR>` text.
 - Completed: Updated `_registro-wip/registro-app.js` to sanitize rendered `td[data-label]` values after the registry table is built so mobile cards receive plain-text labels while desktop table headers keep intentional HTML line breaks.
 - Completed: Bumped `_registro-wip/registro.html` to load `registro-app.js?v=20260622j` so the protected host requests the fresh mobile-label fix after publish.
-- In progress: Protected-host retest after push is needed to confirm the live mobile registry cards no longer show literal `<BR>` text.
-- Blockers/notes: Focused mobile review of the current registry tab did not reveal a second low-risk regression that clearly belonged in the same production publish.
+- Completed: Pushed `main` to GitHub at `419edac` and confirmed raw GitHub source now advertises `registro-app.js?v=20260622j`.
+- Completed: GitHub Pages API reported the site built commit `419edac9242f958434249168730f8717d671be75` from `main` at `2026-06-23T00:55:42Z`, and a manual Pages rebuild was also queued and completed.
+- In progress: Protected-host retest is still needed once the stale served HTML/cache layer stops returning the old `registro-app.js?v=85d5c82` bundle.
+- Blockers/notes: Focused mobile review of the current registry tab did not reveal a second low-risk regression that clearly belonged in the same production publish. At shutdown time, both `https://registry.cocm-camasca.org/_registro-wip/registro.html` and its redirected GitHub Pages URL were still serving the stale bundle despite the successful GitHub Pages build, so live browser verification of the visual fix remains blocked on cache propagation or manual cache purge.
 
