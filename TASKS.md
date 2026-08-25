@@ -28,6 +28,7 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Completed Jennifer Farmer, MD's registry access by adding her existing active psychiatrist profile to the Cloudflare Access policy; the saved policy was verified.
 - [x] Provisioned Nelson as an active therapist across Cloudflare Access, `AuthorizedUsers`, and the active `Config` team list; all three states were verified.
 - [x] Documented the full registry-user access-provisioning workflow, including required identity/role information, Cloudflare Access, `AuthorizedUsers`, and role-based `Config` team rows.
 - [x] Fixed the protected registry mobile-card label rendering so translated header strings with `<br>` no longer appear as literal `<BR>` text on phone-sized views.

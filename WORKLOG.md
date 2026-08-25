@@ -11,6 +11,11 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
     - In progress: ...
     - Blockers/notes: ...
 
+### 2026-08-25 - Codex desktop - Complete Jennifer Farmer registry access
+- Completed: Confirmed Jennifer Farmer, MD already had active psychiatrist records in `AuthorizedUsers` and the active `Config` team list, but was missing from the Cloudflare `Authorized Clinicians` policy.
+- Completed: Added `jenniferbfarmer@gmail.com` to that policy using the verified `cocm.camasca@gmail.com` Cloudflare account; reloaded the policy and confirmed the saved membership.
+- Blockers/notes: No patient records or registry application code changed. This completes the current three-part registry access configuration; Jennifer's own successful sign-in was not tested.
+
 ### 2026-08-25 - Codex desktop - Provision Nelson as registry therapist
 - Completed: Verified the signed-in Cloudflare account was `cocm.camasca@gmail.com`, then added `nelsonenriquereyesramos419@gmail.com` to the `Authorized Clinicians` policy for the `CoCM Camasca Registry` application and confirmed the saved policy includes the address.
 - Completed: Added an active `AuthorizedUsers` row for Nelson with role `therapist`, date `2026-08-25`, and the authorized operator record; added an active bilingual `Config` team row so Nelson appears in therapist-based registry lists.
