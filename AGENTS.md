@@ -27,6 +27,7 @@
 - docs/drive-folder-per-patient-decision.md
 - docs/fix-aurora-patient-name-typo.md
 - docs/update-audit-help-text.md
+- docs/registry-access-provisioning.md
 
 ## Required Startup Routine
 1. Run git status --short in the repo root.
@@ -86,6 +87,14 @@ Append entries to WORKLOG.md using this shape:
 - Bilingual strings belong in registro-i18n.js.
 - Window-called handlers must be explicitly exported to window.*.
 - Do not store tokens, API keys, OAuth secrets, PHI, or patient-identifying data in repo docs.
+
+## Registry User Access Provisioning
+- Treat a direct request such as "give [person] registry access" as a request to provision the full registry path, not Cloudflare-only access.
+- Collect three required details before changing external systems: the person's Google email address, their display name, and one role: `therapist`, `psychiatrist`, `admin`, or `other`. If any are missing or ambiguous, ask explicitly and do not guess.
+- Once the user has directly requested access and supplied those details, update the live access systems in the same task: (1) Cloudflare Access policy for `registry.cocm-camasca.org`; (2) Google Sheet `AuthorizedUsers`, with `email`, `name`, `role`, `active=TRUE`, `added_date`, and `added_by`; and (3) the Google Sheet `Config` team list for `therapist` and `psychiatrist` roles.
+- For a clinical team row in `Config`, use `Category=team`, `Key=<display name>`, `Value=<role>`, translated display labels, and `Active=TRUE`. Do not add `admin` or `other` users to the clinical team list unless the user explicitly asks for them to appear in team-based dropdowns.
+- Verify each change without exposing patient data: confirm Cloudflare saved the policy, confirm the `AuthorizedUsers` row is active, and confirm the role-appropriate team dropdown source contains the display name. Do not edit repo code for an ordinary user addition; the registry reads these Sheet tabs dynamically.
+- Follow the detailed, current procedure in `docs/registry-access-provisioning.md`.
 
 ## Verification Guidance
 - Prefer read-only verification first because this is production clinical software.

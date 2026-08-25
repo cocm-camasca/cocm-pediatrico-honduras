@@ -51,3 +51,9 @@ Context: Dr. Fowler wants Codex to notice chances to make his coding, GitHub, Gi
 Decision: When Codex sees a practical workflow improvement, it should present the opportunity proactively with the expected benefit, any risk or cost, and the smallest safe next step.
 Rationale: Small workflow improvements compound, especially while Dr. Fowler is learning Git and using Codex across multiple machines.
 Consequences: Future sessions should separate optional workflow suggestions from required task work so recommendations help without derailing the current task.
+
+### 2026-07-16 - Provision Registry Access Across All Required Systems
+Context: Cloudflare Access alone admits a user to the protected URL, while the Apps Script relay independently requires an active `AuthorizedUsers` sheet entry. Clinical dropdowns also have a separate `Config` team source.
+Decision: A direct request to give someone registry access, with their Google email, display name, and approved role, authorizes the same-task update of Cloudflare Access, `AuthorizedUsers`, and—when the person is a therapist or psychiatrist—the `Config` team row.
+Rationale: Treating these systems as one access workflow prevents an incomplete account setup where a person can reach the page but cannot read or write registry data, or where a clinician is missing from role-based lists.
+Consequences: Future Codex sessions must ask explicitly for any missing email, display name, or role; ordinary user provisioning remains data-only and does not require front-end code changes.

@@ -11,6 +11,12 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
     - In progress: ...
     - Blockers/notes: ...
 
+### 2026-07-16 - Codex desktop - Durable registry access-provisioning procedure
+- Completed: Added a canonical procedure for provisioning registry users across Cloudflare Access, the Google Sheet `AuthorizedUsers` tab, and the role-based `Config` team list.
+- Completed: Added required-information and clarification rules so a future session asks for the Google email, display name, and role instead of guessing.
+- Completed: Provisioned Angus Bennett, MD as an active psychiatrist in `AuthorizedUsers` and in the active `Config` clinical team list; both rows were verified after writing.
+- Blockers/notes: No application code changed. Cloudflare Access had already been granted earlier in this task; the Sheet entries complete the Apps Script authorization and psychiatrist-dropdown setup.
+
 ### 2026-05-22 - Codex desktop - Beginner-friendly repo communication preference
 - Completed: Added `AGENTS.md` Owner Communication guidance so future Codex sessions explain Git, GitHub, GitHub Desktop, Codex workspace behavior, local-vs-remote state, commits, pushes, pulls, branches, and deployments with extra beginner-friendly context.
 - Completed: Documented that explanations should define concepts, distinguish local files from pushed/deployed changes, and use exact paths/button names when Dr. Fowler is operating tools manually.
