@@ -11,6 +11,12 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
     - In progress: ...
     - Blockers/notes: ...
 
+### 2026-08-25 - Codex desktop - Provision Nelson as registry therapist
+- Completed: Verified the signed-in Cloudflare account was `cocm.camasca@gmail.com`, then added `nelsonenriquereyesramos419@gmail.com` to the `Authorized Clinicians` policy for the `CoCM Camasca Registry` application and confirmed the saved policy includes the address.
+- Completed: Added an active `AuthorizedUsers` row for Nelson with role `therapist`, date `2026-08-25`, and the authorized operator record; added an active bilingual `Config` team row so Nelson appears in therapist-based registry lists.
+- Completed: Verified the two Sheet rows through connector readback and the rendered Google Sheet without accessing patient records.
+- Blockers/notes: No application code or patient records changed. Nelson's own successful sign-in was not tested because it requires his Google account.
+
 ### 2026-07-16 - Codex desktop - Durable registry access-provisioning procedure
 - Completed: Added a canonical procedure for provisioning registry users across Cloudflare Access, the Google Sheet `AuthorizedUsers` tab, and the role-based `Config` team list.
 - Completed: Added required-information and clarification rules so a future session asks for the Google email, display name, and role instead of guessing.
