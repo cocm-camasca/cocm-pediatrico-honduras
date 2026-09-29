@@ -498,7 +498,7 @@ if (typeof window !== 'undefined') window.toggleReviewFlagWithNote = toggleRevie
 if (typeof window !== 'undefined') window.saveReviewNote = saveReviewNote;
 
 // ── Stable-status helpers ─────────────────────────────────────
-// Promote Active patient → Stable. Resets the 16-week psych-consult clock.
+// Promote Therapy + CoCM patient → Stable. Resets the 16-week psych-consult clock.
 async function promoteToStable() {
   const msg = getLang()==='en'
     ? 'Promote this patient to Stable status? Psych review cadence will move to every 16 weeks, starting today.'
@@ -595,7 +595,7 @@ function renderPrompts(p, lang) {
     });
   }
 
-  // 2. Lapsed visit (>8wk for Active, >16wk for Stable)
+  // 2. Lapsed visit (>8wk for Therapy + CoCM, >16wk for Stable)
   const lastVisit = PSTATE.visits[0];
   const daysSince = lastVisit ? daysBetween(lastVisit.Visit_Date, todayISO()) : 9999;
   const isStablePt = /^(estable|stable)$/i.test(String(p.Status||''));
@@ -612,12 +612,10 @@ function renderPrompts(p, lang) {
     const psychDays = p.Last_Psych_Consult_Date ? daysBetween(p.Last_Psych_Consult_Date, todayISO()) : 9999;
     if (psychDays > 112) {
       prompts.push({
-        text: (getLang()==='en'
-          ? 'Stable patient — no psych contact in over 16 weeks. Confirm still stable (resets the 16-week clock) or move back to Active.'
-          : 'Paciente estable — sin contacto psiq. en más de 16 semanas. Confirme que sigue estable (reinicia el reloj de 16 semanas) o regéselo a Activo.'),
+        text: t('stable_confirm_or_change'),
         actions: [
           [getLang()==='en' ? 'Still stable' : 'Sigue estable', 'confirmStable()'],
-          [getLang()==='en' ? 'Return to Active' : 'Regresar a Activo', `setStatus('Activo')`]
+          [t('stable_change_to_active'), `setStatus('Activo')`]
         ]
       });
     }
@@ -1052,20 +1050,15 @@ async function raiseSafety() {
 
 function toggleStatus() {
   const cur = PSTATE.patient.Status || 'Activo';
-  const options = [
-    { v:'Activo',      defEs:'Terapia y monitoreo CoCM activo',                   defEn:'Active therapy and CoCM monitoring' },
-    { v:'Estable',     defEs:'Monitoreo CoCM reducido, cadencia de 16 semanas',   defEn:'Reduced CoCM monitoring, 16-week cadence' },
-    { v:'Inactivo',    defEs:'Solo terapia — CoCM pausado. Puede revisarse periódicamente a menor frecuencia.', defEn:'Therapy only — CoCM paused. May still be reviewed periodically at a lower frequency than active patients.' },
-    { v:'Transferido', defEs:'Ya no es estudiante de Camasca',                    defEn:'No longer a Camasca student' },
-    { v:'Otro',        defEs:'Especificar (texto libre)',                         defEn:'Specify (freetext)' },
-  ];
+  const options = [...REG_STANDARD_STATUSES, 'Otro'];
+  const isCustom = !REG_STANDARD_STATUSES.includes(cur);
   const en = getLang()==='en';
-  const rows = options.map(o => {
-    const checked = o.v === cur ? 'checked' : '';
-    const def = en ? o.defEn : o.defEs;
-    const label = translateStatus(o.v);
+  const rows = options.map(v => {
+    const checked = v === cur || (v === 'Otro' && isCustom) ? 'checked' : '';
+    const def = statusDescription(v);
+    const label = translateStatus(v);
     return `<label style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius-md);margin-bottom:6px;cursor:pointer;">
-      <input type="radio" name="stOpt" value="${o.v}" ${checked} style="margin-top:3px;"/>
+      <input type="radio" name="stOpt" value="${v}" ${checked} style="margin-top:3px;"/>
       <div>
         <div style="font-weight:600;color:var(--color-text);">${label}</div>
         <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:2px;">${def}</div>
@@ -1074,9 +1067,9 @@ function toggleStatus() {
   }).join('');
   document.getElementById('statusForm').innerHTML = `
     ${rows}
-    <div id="stOtherWrap" style="margin-top:8px;display:${cur && !options.slice(0,4).some(o=>o.v===cur) ? 'block':'none'};">
-      <label class="np-label">${en?'Specify':'Especificar'}</label>
-      <input type="text" id="stOther" value="${cur && !['Activo','Estable','Inactivo','Transferido'].includes(cur) ? escapeHtml(cur) : ''}" style="width:100%;padding:8px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);"/>
+    <div id="stOtherWrap" style="margin-top:8px;display:${isCustom ? 'block':'none'};">
+      <label class="np-label">${t('status_specify')}</label>
+      <input type="text" id="stOther" value="${isCustom && cur !== 'Otro' ? escapeHtml(cur) : ''}" style="width:100%;padding:8px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);"/>
     </div>
   `;
   // Wire visibility of Other freetext
@@ -2025,6 +2018,11 @@ function openEditPatientModal() {
   const epConds = (p.Conditions||''). split(',').map(s=>s.trim()).filter(Boolean);
 
   const inputStyle = 'width:100%;padding:8px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);';
+  const currentStatus = p.Status || 'Activo';
+  const statusOptions = REG_STANDARD_STATUSES.map(v =>
+    `<option value="${v}" ${currentStatus === v ? 'selected' : ''}>${translateStatus(v)}</option>`
+  ).join('') + (REG_STANDARD_STATUSES.includes(currentStatus) ? '' :
+    `<option value="${escapeHtml(currentStatus)}" selected>${escapeHtml(translateStatus(currentStatus))}</option>`);
   document.getElementById('editPatientForm').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
       <div style="grid-column:1 / -1;">
@@ -2071,18 +2069,11 @@ function openEditPatientModal() {
         <input type="tel" id="epPhone" value="${escapeHtml(p.Caregiver_Phone||'')}" placeholder="+504..." style="${inputStyle}"/>
       </div>
       <div style="grid-column:1 / -1;">
-        <label class="np-label">${en?'Status':'Estado'}</label>
+        <label class="np-label">${t('th_status')}</label>
         <select id="epStatus" style="${inputStyle}">
-          <option value="Activo" ${(p.Status||'Activo')==='Activo'?'selected':''}>${en?'Therapy + CoCM':'Terapia + CoCM'}</option>
-          <option value="Estable" ${p.Status==='Estable'?'selected':''}>${en?'Stable; ↓ CoCM frequency':'Estable; ↓ frec. CoCM'}</option>
-          <option value="Inactivo" ${p.Status==='Inactivo'?'selected':''}>${en?'Therapy only':'Solo terapia'}</option>
-          <option value="Transferido" ${p.Status==='Transferido'?'selected':''}>${en?'Transferred':'Transferido'}</option>
+          ${statusOptions}
         </select>
-        <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;">
-          ${en
-            ? '"Therapy only" patients may still be reviewed periodically, but at a lower frequency than active patients.'
-            : 'Los pacientes de “solo terapia” pueden revisarse periódicamente, pero a menor frecuencia que los pacientes activos.'}
-        </div>
+        <div id="epStatusHint" style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;"></div>
       </div>
     </div>
     <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border);">
@@ -2108,6 +2099,11 @@ function openEditPatientModal() {
       <textarea id="epNotes" rows="2" placeholder="${en?'Notes (supports **bold** / *italic*)':'Notas (admite **negrita** / *cursiva*)'}" style="${inputStyle}">${escapeHtml(p.Notes||'')}</textarea>
     </div>
   `;
+  const statusSelect = document.getElementById('epStatus');
+  const statusHint = document.getElementById('epStatusHint');
+  const updateStatusHint = () => { statusHint.textContent = statusDescription(statusSelect.value); };
+  statusSelect.addEventListener('change', updateStatusHint);
+  updateStatusHint();
   document.getElementById('editPatientModal').style.display = 'flex';
   const btn = document.getElementById('editPatientSaveBtn');
   if (btn) { btn.disabled = false; btn.textContent = en ? 'Save' : 'Guardar'; }

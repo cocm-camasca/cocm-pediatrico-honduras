@@ -7,6 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
+- [~] Publish and verify the registry status-label/search update; local implementation and synthetic checks are complete, with commit, push, and protected-host verification pending.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
@@ -42,6 +43,7 @@
 - [x] Published and protected-host retested the patient-page stability fixes for visit dialogs, score-only modal reset, and score-trend/history controls.
 
 ## Backlog
+- [ ] Review the patient-page "no visit for X days" prompt for Therapy only and Transferred patients; it is separate from the status-label update.
 - [ ] Fix Aurora/Auora patient name typo via Edit Patient UI when safely accessing that record.
 - [ ] Audit `Auditoria` for any client writes that attempted fields dropped by schema drift.
 - [ ] Keep token/domain expiry tracking current outside of code changes.

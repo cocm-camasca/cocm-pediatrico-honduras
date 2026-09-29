@@ -30,14 +30,23 @@ function setLang(lang) {
     const es = el.getAttribute('data-es'), en = el.getAttribute('data-en');
     if (en) el.textContent = isEN ? en : es;
   });
+  document.querySelectorAll('[data-i18n-label]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n-label'));
+  });
   document.querySelectorAll('[data-es-placeholder]').forEach(el => {
     const es = el.getAttribute('data-es-placeholder'), en = el.getAttribute('data-en-placeholder');
     if (en) el.placeholder = isEN ? en : es;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
   });
   // Tooltip (title attribute) localization — used by status-filter options etc.
   document.querySelectorAll('[data-tip-es]').forEach(el => {
     const es = el.getAttribute('data-tip-es'), en = el.getAttribute('data-tip-en');
     if (en) el.setAttribute('title', isEN ? en : es);
+  });
+  document.querySelectorAll('[data-i18n-tip]').forEach(el => {
+    el.title = t(el.getAttribute('data-i18n-tip'));
   });
   const btnES = document.getElementById('btnES'), btnEN = document.getElementById('btnEN');
   if (btnES) btnES.classList.toggle('active', !isEN);
@@ -280,18 +289,11 @@ function renderNewPatientForm() {
       </div>
     </div>
     <div style="margin-top:var(--space-3);">
-      <label class="np-label">${en?'Status':'Estado'}</label>
+      <label class="np-label">${t('th_status')}</label>
       <select id="npStatus" style="${inputSt}">
-        <option value="Activo" selected>${en?'Therapy + CoCM':'Terapia + CoCM'}</option>
-        <option value="Estable">${en?'Stable; ↓ CoCM frequency':'Estable; ↓ frec. CoCM'}</option>
-        <option value="Inactivo">${en?'Therapy only':'Solo terapia'}</option>
-        <option value="Transferido">${en?'Transferred':'Transferido'}</option>
+        ${REG_STANDARD_STATUSES.map(v => `<option value="${v}" ${v === 'Activo' ? 'selected' : ''}>${translateStatus(v)}</option>`).join('')}
       </select>
-      <div style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;">
-        ${en
-          ? '"Therapy only" patients may still be reviewed periodically, but at a lower frequency than active patients.'
-          : 'Los pacientes de “solo terapia” pueden revisarse periódicamente, pero a menor frecuencia que los pacientes activos.'}
-      </div>
+      <div id="npStatusHint" style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;"></div>
     </div>
     <div style="margin-top:var(--space-3);">
       <label class="np-label">${t('label_conditions')}</label>
@@ -326,6 +328,11 @@ function renderNewPatientForm() {
       <button type="button" onclick="addNpMedRow()" style="margin-top:var(--space-2);background:transparent;border:1px dashed var(--color-border);color:var(--color-primary);padding:6px 12px;border-radius:var(--radius-md);font-size:var(--text-xs);cursor:pointer;width:100%;">+ ${en?'Add medication':'Agregar medicamento'}</button>
     </div>
   `;
+  const statusSelect = document.getElementById('npStatus');
+  const statusHint = document.getElementById('npStatusHint');
+  const updateStatusHint = () => { statusHint.textContent = statusDescription(statusSelect.value); };
+  statusSelect.addEventListener('change', updateStatusHint);
+  updateStatusHint();
 }
 
 // Age in years from an ISO YYYY-MM-DD DOB string.
@@ -1025,9 +1032,9 @@ function filterAndSortPatients(all) {
     if (therapist && p.Therapist !== therapist) return false;
     if (condition && !(p.Conditions||'').split(',').map(s=>s.trim()).includes(condition)) return false;
     if (statusSel === 'active') {
-      if (p.Status && p.Status !== 'Activo') return false;
+      if (p.Status && p.Status !== 'Activo' && p.Status !== 'Active') return false;
     } else if (statusSel === 'due_followup') {
-      // Active patients: overdue at >= 8 wks. Stable patients: >= 16 wks.
+      // Therapy + CoCM patients: overdue at >= 8 wks. Stable patients: >= 16 wks.
       const isStable = String(p.Status||'').toLowerCase() === 'estable' || String(p.Status||'') === 'Stable';
       const threshold = isStable ? 112 : 56;
       if (p._daysSinceLastVisit < threshold) return false;
@@ -1037,6 +1044,10 @@ function filterAndSortPatients(all) {
       if (!p._safetyActive) return false;
     } else if (statusSel === 'brigade') {
       if (!isTruthyFlag(p.Brigade_Flag)) return false;
+    } else if (statusSel === 'Estable') {
+      if (p.Status !== 'Estable' && p.Status !== 'Stable') return false;
+    } else if (statusSel === 'Otro') {
+      if (!isOtherStatus(p.Status)) return false;
     } else if (statusSel !== 'all' && statusSel) {
       if (p.Status !== statusSel) return false;
     }
@@ -1121,7 +1132,7 @@ function renderStats(list, lang) {
   list.forEach(p => byTier[p._tier]++);
   const safety = list.filter(p => p._safetyActive).length;
   const notImp = list.filter(p => isNotImproving(p)).length;
-  // Lapsed: Active >8wk (56d), Stable >16wk (112d). Skip Inactivo/Transferido.
+  // Lapsed: Therapy + CoCM >8wk (56d), Stable >16wk (112d). Skip Therapy only/Transferred.
   const lapsedThresh = p => (String(p.Status||'').toLowerCase()==='estable' || p.Status==='Stable') ? 112 : 56;
   const stale  = list.filter(p => {
     const s = String(p.Status||'');
@@ -1146,7 +1157,7 @@ function renderStats(list, lang) {
     card(t('stat_safety'),       safety, safety > 0 ? '⚠' : '', safety > 0 ? 'stat-accent-error' : ''),
     card(t('stat_sev_mod'),      byTier['Severa'] + byTier['Moderada']),
     card(t('stat_not_improving'), notImp),
-    card(t('stat_due_followup'), due, '≥8wk'),
+    card(t('stat_due_followup'), due, t('stat_due_cadence')),
     card(t('stat_stale'),        stale),
   ].join('');
 }
@@ -1155,17 +1166,17 @@ function renderStatusChips(lang) {
   // Clickable chips for quick filtering below the toolbar
   const host = document.getElementById('statusChips');
   if (!host) return;
-  const current = document.getElementById('filterStatus').value || 'active';
+  const current = document.getElementById('filterStatus').value || 'all';
   const chips = [
-    ['active',        t('filter_active')],
+    ['active',        t('status_activo')],
     ['all',           t('filter_all')],
     ['safety',        '⚠ ' + (lang==='en' ? 'Safety flag' : 'Seguridad')],
     ['brigade',       '🚩 ' + (lang==='en' ? 'Brigade' : 'Brigada')],
     ['due_followup',  t('stat_due_followup')],
-    ['Estable',       (lang==='en'?'Stable':'Estable')],
-    ['Inactivo',      (lang==='en'?'Inactive':'Inactivo')],
-    ['Transferido',   (lang==='en'?'Transferred':'Transferido')],
-    ['Otro',          (lang==='en'?'Other':'Otro')],
+    ['Estable',       t('status_estable')],
+    ['Inactivo',      t('status_inactivo')],
+    ['Transferido',   t('status_transfer')],
+    ['Otro',          t('status_otro')],
   ];
   host.innerHTML = chips.map(([val, label]) => {
     const active = current === val;
@@ -1512,9 +1523,9 @@ function renderPatientRow(p, lang, opts={}) {
 
 // Derived flag: psych consult overdue.
 // Thresholds:
-//   Active patients   → > 8 weeks (56 days) since last psych consult
+//   Therapy + CoCM    → > 8 weeks (56 days) since last psych consult
 //   Stable patients   → > 16 weeks (112 days) since last psych consult
-// Inactive / Transferido / Prioridad Baja patients don't trigger this.
+// Therapy only / Transferred / Low Priority patients don't trigger this.
 function isPsychReviewOverdue(p) {
   const statusRaw = String(p.Status||'');
   const status = statusRaw.toLowerCase();
