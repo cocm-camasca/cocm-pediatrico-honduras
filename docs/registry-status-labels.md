@@ -31,4 +31,10 @@ Visitas_Test: same first 16 fields; no Entry_Type
 Medicamentos and Medicamentos_Test: Med_ID, Patient_ID, Date, Medication, Dose, Frequency, Action, Prescriber, Reason, Notes, Created_By, Created_At, Schema_Version
 ```
 
-The active deployment version, full Cloudflare policy, and cache configuration still require console verification before a production publish. Because this change edits front-end code only, the Sheet and Apps Script contracts are left intact.
+The active Apps Script deployment version and full Cloudflare policy/cache settings could not be read from this checkout. This front-end release did not change those systems. Console access would be needed for a rollback involving Cloudflare or Apps Script.
+
+## Release evidence — 2026-09-28
+
+- GitHub `main` received commit `a0c637cd1ffbce2bacfba2c1056cca95f640a8de`.
+- GitHub Pages reported a successful build and deployment of that exact commit from `main` at 2026-09-29 01:28 UTC.
+- The protected registry domain continued redirecting unauthenticated requests to Cloudflare Access. A signed-in browser check of the served labels and assets is pending.
