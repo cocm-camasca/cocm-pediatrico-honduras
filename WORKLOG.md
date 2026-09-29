@@ -152,3 +152,8 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: Committed and pushed the UI update as `e927a61`; GitHub Pages reported a successful build of that exact commit at 2026-09-29 12:02:50 UTC. An unauthenticated check of the protected registry continued to redirect to Cloudflare Access.
 - In progress: Dr. Fowler's signed-in live-page review remains.
 - Blockers/notes: The protected host requires Google sign-in for agent-side visual verification. Apps Script deployment and Cloudflare console settings were not changed or freshly inspected; Sheet schema is unchanged.
+
+### 2026-09-29 - Codex desktop - Close registry status ticket
+- Completed: Dr. Fowler confirmed the live status-label and description update looks good. Matched Nick Ladd's latest registry suggestion `S-0003` to the Active/Therapy only search report, then changed `Sugerencias!H16:K16` to `Resuelto` with a concise resolution note, `Troy Fowler / Codex`, and a UTC resolution time. Readback confirmed all four cells.
+- In progress: No further work on `S-0003` remains.
+- Blockers/notes: No code or patient data was changed during ticket closure. The connected Sheet was briefly rate-limited before the target row was read; the later read and update succeeded.
