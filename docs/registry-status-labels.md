@@ -38,3 +38,16 @@ The active Apps Script deployment version and full Cloudflare policy/cache setti
 - GitHub `main` received commit `a0c637cd1ffbce2bacfba2c1056cca95f640a8de`.
 - GitHub Pages reported a successful build and deployment of that exact commit from `main` at 2026-09-29 01:28 UTC.
 - The protected registry domain continued redirecting unauthenticated requests to Cloudflare Access. A signed-in browser check of the served labels and assets is pending.
+
+## Pre-change rollback checkpoint — 2026-09-29 descriptive selectors
+
+- GitHub: clean local `main` matched `origin/main` at `d2167865fcbcc8afd05b4a49f09a0cef6ed58d9f` before this follow-up. The owner confirmed the first status-label release is visible on the protected page.
+- Cloudflare: an unauthenticated HEAD request to the registry still returned HTTP 302 through Access. The policy and cache settings were not edited or available for fresh inspection.
+- Apps Script: the front-end source still records relay v2.2, Version 9, confirmed 2026-05-05; the live deployment console remains unverified. This follow-up will not change Apps Script.
+- Google Sheets: the 2026-09-28 row-1 header snapshot above remains the rollback schema reference. No Sheet or data changes are planned for this UI-only follow-up.
+
+## Descriptive selector follow-up — 2026-09-29
+
+The registry search filter, New patient status field, and Edit patient status field now show each choice with the same bilingual explanation used by Change status. The quick-filter chips carry the explanations as hover/accessibility text and show the selected chip's explanation immediately below the row. The underlying select values and Sheet status contract stay the same, including custom statuses in Edit patient.
+
+Local read-only browser checks used synthetic patient data: the mobile search picker showed all nine filter choices and explanations in both languages; selecting Therapy only kept the stored `Inactivo` value and returned only a synthetic `Inactivo` record. New patient showed four explained statuses; Edit patient preserved both a standard status and a synthetic custom status. The dark phone preview and desktop menu bounds were inspected. No production patient data was accessed or changed during these checks.

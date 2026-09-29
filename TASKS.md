@@ -7,7 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
-- [~] Verify the protected registry after the status-label/search update; GitHub `main` and GitHub Pages built commit `a0c637c`, with signed-in Cloudflare-host verification pending.
+- [~] Publish the descriptive status selectors on the registry and patient forms, then obtain Dr. Fowler's live-page review.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
@@ -29,6 +29,7 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Dr. Fowler confirmed that the first status-label/search release is visible on the protected registry and requested fuller descriptions in every status selector.
 - [x] Completed Jennifer Farmer, MD's registry access by adding her existing active psychiatrist profile to the Cloudflare Access policy; the saved policy was verified.
 - [x] Provisioned Nelson as an active therapist across Cloudflare Access, `AuthorizedUsers`, and the active `Config` team list; all three states were verified.
 - [x] Documented the full registry-user access-provisioning workflow, including required identity/role information, Cloudflare Access, `AuthorizedUsers`, and role-based `Config` team rows.

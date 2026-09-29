@@ -1209,3 +1209,67 @@ a, button, [role='button'], input, select {
 
 /* Prevent horizontal overflow on mobile */
 html, body { overflow-x: hidden; max-width: 100%; }
+
+/* Status selectors show the care-path explanation with every choice. */
+.detailed-status-picker { position: relative; width: 100%; min-width: 0; }
+.detailed-status-picker summary {
+  display: block;
+  position: relative;
+  list-style: none;
+  cursor: pointer;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+.detailed-status-picker summary::-webkit-details-marker { display: none; }
+.detailed-status-picker summary::after {
+  content: '▾'; position: absolute; right: 10px; top: 9px;
+  color: var(--color-text-muted);
+}
+.detailed-status-picker summary:focus-visible,
+.detailed-status-choice:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.detailed-status-label { display: block; font-size: var(--text-sm); font-weight: 600; }
+.detailed-status-description {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  white-space: normal;
+}
+.detailed-status-menu {
+  display: grid;
+  gap: 6px;
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+}
+.detailed-status-choice {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+}
+.detailed-status-choice[aria-pressed='true'] { border-color: var(--color-primary); }
+.reg-toolbar .detailed-status-menu {
+  position: absolute;
+  right: 0;
+  z-index: 80;
+  width: min(420px, calc(100vw - 32px));
+}
+@media (max-width: 700px) {
+  .reg-toolbar .detailed-status-menu { position: static; width: 100%; }
+}

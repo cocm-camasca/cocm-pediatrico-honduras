@@ -48,6 +48,7 @@ function setLang(lang) {
   document.querySelectorAll('[data-i18n-tip]').forEach(el => {
     el.title = t(el.getAttribute('data-i18n-tip'));
   });
+  setupDetailedStatusPicker('filterStatus');
   const btnES = document.getElementById('btnES'), btnEN = document.getElementById('btnEN');
   if (btnES) btnES.classList.toggle('active', !isEN);
   if (btnEN) btnEN.classList.toggle('active', isEN);
@@ -293,7 +294,6 @@ function renderNewPatientForm() {
       <select id="npStatus" style="${inputSt}">
         ${REG_STANDARD_STATUSES.map(v => `<option value="${v}" ${v === 'Activo' ? 'selected' : ''}>${translateStatus(v)}</option>`).join('')}
       </select>
-      <div id="npStatusHint" style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;"></div>
     </div>
     <div style="margin-top:var(--space-3);">
       <label class="np-label">${t('label_conditions')}</label>
@@ -328,11 +328,7 @@ function renderNewPatientForm() {
       <button type="button" onclick="addNpMedRow()" style="margin-top:var(--space-2);background:transparent;border:1px dashed var(--color-border);color:var(--color-primary);padding:6px 12px;border-radius:var(--radius-md);font-size:var(--text-xs);cursor:pointer;width:100%;">+ ${en?'Add medication':'Agregar medicamento'}</button>
     </div>
   `;
-  const statusSelect = document.getElementById('npStatus');
-  const statusHint = document.getElementById('npStatusHint');
-  const updateStatusHint = () => { statusHint.textContent = statusDescription(statusSelect.value); };
-  statusSelect.addEventListener('change', updateStatusHint);
-  updateStatusHint();
+  setupDetailedStatusPicker('npStatus');
 }
 
 // Age in years from an ISO YYYY-MM-DD DOB string.
@@ -1013,6 +1009,7 @@ function renderAll() {
   const lang = getLang();
   const list = filterAndSortPatients(STATE.enrichedPatients);
 
+  setupDetailedStatusPicker('filterStatus');
   renderSafetyBanner(list);
   renderStats(list, lang);
   renderPatientSections(list, lang);
@@ -1168,20 +1165,24 @@ function renderStatusChips(lang) {
   if (!host) return;
   const current = document.getElementById('filterStatus').value || 'all';
   const chips = [
-    ['active',        t('status_activo')],
-    ['all',           t('filter_all')],
-    ['safety',        '⚠ ' + (lang==='en' ? 'Safety flag' : 'Seguridad')],
-    ['brigade',       '🚩 ' + (lang==='en' ? 'Brigade' : 'Brigada')],
-    ['due_followup',  t('stat_due_followup')],
-    ['Estable',       t('status_estable')],
-    ['Inactivo',      t('status_inactivo')],
-    ['Transferido',   t('status_transfer')],
-    ['Otro',          t('status_otro')],
+    ['active',        t('status_activo'), t('status_activo_desc')],
+    ['all',           t('filter_all'), t('filter_all_desc')],
+    ['safety',        t('status_safety'), t('status_safety_desc')],
+    ['brigade',       t('status_brigade'), t('status_brigade_desc')],
+    ['due_followup',  t('stat_due_followup'), t('status_due_followup_desc')],
+    ['Estable',       t('status_estable'), t('status_estable_desc')],
+    ['Inactivo',      t('status_inactivo'), t('status_inactivo_desc')],
+    ['Transferido',   t('status_transfer'), t('status_transfer_desc')],
+    ['Otro',          t('status_otro'), t('status_otro_desc')],
   ];
-  host.innerHTML = chips.map(([val, label]) => {
+  host.innerHTML = chips.map(([val, label, description]) => {
     const active = current === val;
-    return `<button class="status-chip${active?' active':''}" onclick="selectStatusChip('${val}')">${label}</button>`;
+    return `<button class="status-chip${active?' active':''}" title="${escapeHtml(description)}" aria-label="${escapeHtml(label + ': ' + description)}" onclick="selectStatusChip('${val}')">${label}</button>`;
   }).join('');
+  const currentChip = chips.find(([val]) => val === current);
+  const detail = document.getElementById('statusChipDetail');
+  const detailText = currentChip ? `${currentChip[1]} — ${currentChip[2]}` : '';
+  if (detail && detail.textContent !== detailText) detail.textContent = detailText;
 }
 
 function selectStatusChip(val) {

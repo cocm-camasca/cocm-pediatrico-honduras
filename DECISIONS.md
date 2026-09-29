@@ -4,6 +4,12 @@ This file records durable architectural, workflow, safety, and publishing decisi
 
 ---
 
+### 2026-09-29 - Show Status Meaning At Selection Time
+Context: The first status-label release was visible on the protected site, but the search filter and patient forms did not show the full explanations alongside every choice.
+Decision: Show each bilingual status explanation in the search, New patient, Edit patient, and Change status selectors. Show the selected explanation beside the quick-filter chips. Keep the existing stored values and filtering behavior.
+Rationale: Clinicians should be able to compare care-path meanings before choosing a status, including on phones where native select tooltips are not visible.
+Consequences: Front-end selectors use a shared descriptive picker while retaining their original select values for filters and saves. No Apps Script or Sheet schema change is required.
+
 ### 2026-09-28 - Describe Patient Status As Current Care
 Context: The registry search showed `Inactivo` as "Inactive" while the patient page showed "Therapy only." The old help text implied missed visits or prior CoCM participation, which caused a therapy-only patient with a recent visit to appear missing under the default Active filter.
 Decision: Display `Activo` as Therapy + CoCM, `Estable` as Stable, `Inactivo` as Therapy only, and `Transferido` as Transferred in both languages across the registry. Therapy only means therapy without current CoCM monitoring, regardless of whether the patient has ever participated in CoCM. Start searches at All statuses, while preserving the selected status, therapist, and condition filters. Group custom statuses under Other and preserve them in edit forms.

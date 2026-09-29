@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CoCM Camasca — Registro de Pacientes</title>
-  <link rel="stylesheet" href="style.css?v=85d5c82" />
+  <link rel="stylesheet" href="style.css?v=20260929details" />
   <style>
     /* ================================================================
        REGISTRO DASHBOARD — inherits portal design tokens from style.css
@@ -444,6 +444,7 @@
     .status-chip:hover { background: var(--color-surface-offset); }
     .status-chip.active { background: var(--color-primary); color:white; border-color: var(--color-primary); }
     .status-chip.warn.active { background: var(--color-error); border-color: var(--color-error); }
+    .status-chip-detail { margin: -2px 0 10px; color: var(--color-text-muted); font-size: var(--text-xs); line-height: 1.4; }
 
     /* ── Stat card accents ──────────────────────────────────────── */
     .stat-accent-error { border-left: 3px solid var(--color-error); }
@@ -619,14 +620,13 @@
         </div>
 
         <div class="filter-group">
-          <label for="filterStatus" data-es="Estado" data-en="Status">Estado</label>
+          <label id="statusFilterLabel" data-es="Estado" data-en="Status">Estado</label>
           <select id="filterStatus" onchange="renderAll()">
-            <!-- Hidden options used by status-chip clicks (safety, brigade) — kept out of dropdown UI via CSS -->
-            <option value="brigade" class="_chip-only-option" hidden>brigade</option>
             <option value="active" data-i18n-label="status_activo" data-i18n-tip="status_activo_desc">Terapia + CoCM</option>
             <option value="all" selected data-i18n-label="filter_all" data-i18n-tip="filter_all_desc">Todos los estados</option>
-            <option value="safety" data-es="⚠ Con bandera de seguridad" data-en="⚠ Safety flag" title="Pacientes con bandera de seguridad activa" data-tip-es="Pacientes con bandera de seguridad activa (SI, autolesión, etc.)." data-tip-en="Patients with active safety flag (SI, self-harm, etc.).">⚠ Con bandera de seguridad</option>
-            <option value="due_followup" data-es="Por seguimiento" data-en="Due for follow-up" title="Pacientes con seguimiento pendiente" data-tip-es="Pacientes con seguimiento pendiente según la cadencia del programa." data-tip-en="Patients with pending follow-up per program cadence.">Por seguimiento</option>
+            <option value="safety" data-i18n-label="status_safety" data-i18n-tip="status_safety_desc">⚠ Con bandera de seguridad</option>
+            <option value="brigade" data-i18n-label="status_brigade" data-i18n-tip="status_brigade_desc">🚩 Brigada</option>
+            <option value="due_followup" data-i18n-label="status_due_followup" data-i18n-tip="status_due_followup_desc">Por seguimiento</option>
             <option value="Estable" data-i18n-label="status_estable" data-i18n-tip="status_estable_desc">Estable</option>
             <option value="Inactivo" data-i18n-label="status_inactivo" data-i18n-tip="status_inactivo_desc">Solo terapia</option>
             <option value="Transferido" data-i18n-label="status_transfer" data-i18n-tip="status_transfer_desc">Transferido</option>
@@ -687,6 +687,7 @@
 
       <!-- Status chips (quick filters) -->
       <div class="status-chip-row" id="statusChips"></div>
+      <p class="status-chip-detail" id="statusChipDetail" aria-live="polite"></p>
 
       <!-- Stat cards -->
       <div class="stat-grid" id="statGrid"></div>
@@ -843,9 +844,9 @@
 <!-- Toast host (populated by registro-i18n.js showToast) -->
 <div id="regToastHost"></div>
 
-<script src="registro-i18n.js?v=20260928status"></script>
+<script src="registro-i18n.js?v=20260929details"></script>
 <script src="registro-data.js?v=85d5c82"></script>
-<script src="registro-app.js?v=20260928status"></script>
+<script src="registro-app.js?v=20260929details"></script>
 
 </body>
 </html>

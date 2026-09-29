@@ -293,6 +293,10 @@ const REG_I18N = {
   status_transfer_desc: { es: 'Ya no recibe seguimiento en este registro, por ejemplo, si salió de Camasca o trasladó su atención.', en: 'No longer followed in this registry, for example after leaving Camasca or moving care elsewhere.' },
   status_otro_desc: { es: 'Estado personalizado fuera de las cuatro categorías estándar.', en: 'A custom status outside the four standard categories.' },
   status_baja_desc: { es: 'Estado existente de prioridad baja.', en: 'Existing Low Priority status.' },
+  status_safety_desc: { es: 'Pacientes con una bandera de seguridad activa.', en: 'Patients with an active safety flag.' },
+  status_brigade: { es: '🚩 Brigada', en: '🚩 Brigade' },
+  status_brigade_desc: { es: 'Pacientes marcados para la próxima visita de brigada.', en: 'Patients flagged for the next brigade visit.' },
+  status_due_followup_desc: { es: 'Pacientes pendientes de seguimiento según la cadencia de su estado de atención.', en: 'Patients due for follow-up based on their current care cadence.' },
   status_specify: { es: 'Especificar', en: 'Specify' },
   stable_change_to_active: { es: 'Cambiar a Terapia + CoCM', en: 'Change to Therapy + CoCM' },
   stable_confirm_or_change: { es: 'Paciente estable: sin contacto psiquiátrico en más de 16 semanas. Confirme que sigue estable (reinicia el plazo de 16 semanas) o cambie a Terapia + CoCM.', en: 'Stable patient: no psychiatric contact in over 16 weeks. Confirm still stable (resets the 16-week clock) or change to Therapy + CoCM.' },
@@ -436,6 +440,80 @@ function statusDescription(v) {
 function isOtherStatus(v) {
   const value = String(v || '').trim();
   return !!value && !REG_STANDARD_STATUSES.includes(value) && !['Active', 'Stable'].includes(value);
+}
+
+// Show the same status explanations wherever a status is selected. The original
+// select remains the source of truth for existing filters and save handlers.
+function setupDetailedStatusPicker(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  let picker = select.nextElementSibling;
+  if (!picker || !picker.classList.contains('detailed-status-picker')) {
+    picker = document.createElement('details');
+    picker.className = 'detailed-status-picker';
+    picker.dataset.statusPickerFor = selectId;
+    const summary = document.createElement('summary');
+    const menu = document.createElement('div');
+    menu.className = 'detailed-status-menu';
+    picker.append(summary, menu);
+    select.insertAdjacentElement('afterend', picker);
+    picker.addEventListener('toggle', () => {
+      if (picker.open) menu.scrollTop = 0;
+    });
+    picker.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && picker.open) {
+        picker.open = false;
+        summary.focus();
+      }
+    });
+    select.addEventListener('change', () => setupDetailedStatusPicker(selectId));
+  }
+  select.hidden = true;
+  const detailsFor = value => {
+    const special = {
+      active: ['status_activo', 'status_activo_desc'],
+      all: ['filter_all', 'filter_all_desc'],
+      safety: ['status_safety', 'status_safety_desc'],
+      brigade: ['status_brigade', 'status_brigade_desc'],
+      due_followup: ['status_due_followup', 'status_due_followup_desc'],
+    }[value];
+    return special
+      ? { label: t(special[0]), description: t(special[1]) }
+      : { label: translateStatus(value), description: statusDescription(value) };
+  };
+  const summary = picker.querySelector('summary');
+  const selected = detailsFor(select.value);
+  const selectedLabel = document.createElement('span');
+  selectedLabel.className = 'detailed-status-label';
+  selectedLabel.textContent = selected.label;
+  const selectedDescription = document.createElement('span');
+  selectedDescription.className = 'detailed-status-description';
+  selectedDescription.textContent = selected.description;
+  summary.replaceChildren(selectedLabel, selectedDescription);
+  summary.setAttribute('aria-label', `${getLang() === 'en' ? 'Status' : 'Estado'}: ${selected.label}. ${selected.description}`);
+  const menu = picker.querySelector('.detailed-status-menu');
+  const choices = Array.from(select.options).map(option => {
+    const { label, description } = detailsFor(option.value);
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'detailed-status-choice';
+    button.setAttribute('aria-pressed', String(option.value === select.value));
+    const name = document.createElement('span');
+    name.className = 'detailed-status-label';
+    name.textContent = label;
+    const hint = document.createElement('span');
+    hint.className = 'detailed-status-description';
+    hint.textContent = description;
+    button.append(name, hint);
+    button.addEventListener('click', () => {
+      select.value = option.value;
+      picker.open = false;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      summary.focus();
+    });
+    return button;
+  });
+  menu.replaceChildren(...choices);
 }
 
 // Translate a medication Action value coming from the sheet (mixed ES).

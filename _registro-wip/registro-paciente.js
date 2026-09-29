@@ -2073,7 +2073,6 @@ function openEditPatientModal() {
         <select id="epStatus" style="${inputStyle}">
           ${statusOptions}
         </select>
-        <div id="epStatusHint" style="font-size:var(--text-xs);color:var(--color-text-muted);margin-top:4px;"></div>
       </div>
     </div>
     <div style="margin-top:var(--space-4);padding-top:var(--space-3);border-top:1px solid var(--color-border);">
@@ -2099,11 +2098,7 @@ function openEditPatientModal() {
       <textarea id="epNotes" rows="2" placeholder="${en?'Notes (supports **bold** / *italic*)':'Notas (admite **negrita** / *cursiva*)'}" style="${inputStyle}">${escapeHtml(p.Notes||'')}</textarea>
     </div>
   `;
-  const statusSelect = document.getElementById('epStatus');
-  const statusHint = document.getElementById('epStatusHint');
-  const updateStatusHint = () => { statusHint.textContent = statusDescription(statusSelect.value); };
-  statusSelect.addEventListener('change', updateStatusHint);
-  updateStatusHint();
+  setupDetailedStatusPicker('epStatus');
   document.getElementById('editPatientModal').style.display = 'flex';
   const btn = document.getElementById('editPatientSaveBtn');
   if (btn) { btn.disabled = false; btn.textContent = en ? 'Save' : 'Guardar'; }
