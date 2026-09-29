@@ -7,7 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
-- [~] Publish the descriptive status selectors on the registry and patient forms, then obtain Dr. Fowler's live-page review.
+- [~] Obtain Dr. Fowler's protected live-page review of the descriptive status selectors; GitHub Pages built the published UI commit `e927a61`.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.

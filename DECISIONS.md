@@ -8,7 +8,7 @@ This file records durable architectural, workflow, safety, and publishing decisi
 Context: The first status-label release was visible on the protected site, but the search filter and patient forms did not show the full explanations alongside every choice.
 Decision: Show each bilingual status explanation in the search, New patient, Edit patient, and Change status selectors. Show the selected explanation beside the quick-filter chips. Keep the existing stored values and filtering behavior.
 Rationale: Clinicians should be able to compare care-path meanings before choosing a status, including on phones where native select tooltips are not visible.
-Consequences: Front-end selectors use a shared descriptive picker while retaining their original select values for filters and saves. No Apps Script or Sheet schema change is required.
+Consequences: Front-end selectors use a shared descriptive picker while retaining their original select values for filters and saves. No Apps Script or Sheet schema change is required. GitHub Pages built UI commit `e927a61`; signed-in owner review remains.
 
 ### 2026-09-28 - Describe Patient Status As Current Care
 Context: The registry search showed `Inactivo` as "Inactive" while the patient page showed "Therapy only." The old help text implied missed visits or prior CoCM participation, which caused a therapy-only patient with a recent visit to appear missing under the default Active filter.
