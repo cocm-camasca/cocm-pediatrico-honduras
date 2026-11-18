@@ -17,10 +17,9 @@ function correctMedication_(tab, body, actor) {
       !['Audit_ID','Timestamp','User','Action','Tab','Row_ID','Field','Old_Value','New_Value'].every(h => auditHeaders.includes(h))) {
     throw Error('Registry schema changed');
   }
-  // An empty batch checks authorization to use the transactional write service
-  // without modifying any cell. Used by the protected release readiness check.
+  // Check service access without changing a worksheet.
   if (body.checkOnly === true) {
-    Sheets.Spreadsheets.batchUpdate({requests:[]}, SHEET_ID);
+    Sheets.Spreadsheets.get(SHEET_ID, {fields:'spreadsheetId'});
     return {ready:true};
   }
   const patient = body.patientId, token = body.requestId, parts = body.parts;

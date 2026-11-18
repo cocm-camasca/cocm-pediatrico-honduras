@@ -7,6 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
+- [~] Medication corrections and both report formats are published. Owner Google relay authorization and end-to-end protected-host verification are pending.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
@@ -28,7 +29,6 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
-- [x] Add medication correction flags, transactional split corrections, and downloadable or copyable supply and all-patient reports.
 - [x] Add chart links and a separate fluoxetine/sertraline reconciliation section to the supply CSV. Show the same warning on the chart and append dated change and stop events to medication history.
 - [x] Published the 30-day medication supply CSV (S-0004) and verified a test-dataset download from the signed-in registry.
 - [x] Dr. Fowler approved the live descriptive status selectors; closed Nick Ladd's registry report `S-0003` in `Sugerencias` with a verified resolution record.
