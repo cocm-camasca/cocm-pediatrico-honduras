@@ -157,3 +157,16 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: Dr. Fowler confirmed the live status-label and description update looks good. Matched Nick Ladd's latest registry suggestion `S-0003` to the Active/Therapy only search report, then changed `Sugerencias!H16:K16` to `Resuelto` with a concise resolution note, `Troy Fowler / Codex`, and a UTC resolution time. Readback confirmed all four cells.
 - In progress: No further work on `S-0003` remains.
 - Blockers/notes: No code or patient data was changed during ticket closure. The connected Sheet was briefly rate-limited before the target row was read; the later read and update succeeded.
+
+### 2026-11-18 - Codex desktop - Medication supply report implementation
+- Completed: Recorded the pre-edit rollback checkpoint. Local main and GitHub main both pointed to 3fee2b5d006aea413c6d32f2158ab13def194c67. Eight existing modified files were present. The protected registry returned HTTP 302 through Cloudflare. The configured Apps Script endpoint and its v2.2 / Version 9 source annotation matched the previous checkpoint. Live row-one headers matched the September schema snapshot for patients, visits and medications in both datasets. Auditoria has Audit_ID, Timestamp, User, Action, Tab, Row_ID, Field, Old_Value and New_Value.
+- Completed: Added the bilingual on-demand CSV export to the dashboard. It reads current patient, visit, medication and audit data, reconstructs regimens, counts scheduled and PRN supply, and lists unresolved records by patient ID. Report code loads on demand. The CSV uses the active dataset and marks test data explicitly.
+- Completed: Ten synthetic regression checks passed. In Chrome, tested both language buttons and real CSV downloads against a local synthetic relay, confirmed the dashboard filters do not narrow the report, checked the button at phone width, and verified that a failed audit read offers a retry without generating a file. Excel opened both CSVs with the expected quantities and patient counts.
+- In progress: Ready for local preview. Publication and a protected-host download check remain pending.
+- Completed: Separated the medication report from Suggestions with a divider and a pill icon. Checked both languages at desktop and phone widths and confirmed the icon persists after a CSV download.
+- Blockers/notes: The active Apps Script deployment version and Cloudflare dashboard settings were not independently verified. This release uses the existing read interface.
+
+### 2026-11-18 - Codex desktop - Medication supply report release
+- Completed: Dr. Fowler reviewed the local preview and authorized publication. Scoped the release to the report, its tests and release notes. Earlier status-label edits remain local.
+- In progress: Verify GitHub Pages deployment and a report download from the signed-in registry.
+- Blockers/notes: The release uses the existing Cloudflare, Apps Script and Sheet configuration.

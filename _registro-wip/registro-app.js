@@ -18,6 +18,26 @@ let STATE = {
   groupByCondition: false, // when true, sections list by primary condition group
 };
 
+window.downloadMedicationSupply = async function downloadMedicationSupply() {
+  const button = document.getElementById('medSupplyButton');
+  if (button.disabled) return;
+  const label = button.querySelector('[data-i18n-label]');
+  button.disabled = true;
+  label.dataset.i18nLabel = 'supply_loading';
+  label.textContent = t('supply_loading');
+  try {
+    const { downloadSupplyReport } = await import('./registro-supply.mjs?v=20261118');
+    await downloadSupplyReport();
+  } catch (error) {
+    console.warn('[Medication supply]', error.message);
+    showToast(t('supply_failed'), { variant: 'error', retry: window.downloadMedicationSupply });
+  } finally {
+    button.disabled = false;
+    label.dataset.i18nLabel = 'supply_button';
+    label.textContent = t('supply_button');
+  }
+};
+
 // ════════════════════════════════════════════════════════════════
 // LANGUAGE TOGGLE
 // ════════════════════════════════════════════════════════════════

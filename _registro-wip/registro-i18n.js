@@ -6,6 +6,27 @@
    ============================================================ */
 
 const REG_I18N = {
+  supply_button: { en: 'Medication supply report', es: 'Informe de suministro de medicamentos' },
+  supply_loading: { en: 'Preparing report…', es: 'Preparando informe…' },
+  supply_failed: { en: 'Could not generate the report from fresh registry data. Please retry.', es: 'No se pudo generar el informe con datos actualizados del registro. Vuelva a intentarlo.' },
+  supply_title: { en: '30-day medication supply', es: 'Suministro de medicamentos para 30 días' },
+  supply_test: { en: 'Test data', es: 'Datos de prueba' },
+  supply_partial: { en: 'Partial totals — see entries needing review below', es: 'Totales parciales — consulte los registros pendientes de revisión' },
+  supply_med: { en: 'Medication', es: 'Medicamento' },
+  supply_strength: { en: 'Tablet strength (mg)', es: 'Concentración por tableta (mg)' },
+  supply_tablets: { en: 'Tablets for 30 days', es: 'Tabletas para 30 días' },
+  supply_people: { en: 'Total patients', es: 'Pacientes en total' },
+  supply_prn: { en: 'Patients with as-needed use', es: 'Pacientes con uso según necesidad' },
+  supply_review: { en: 'Needs review — supply cannot be calculated', es: 'Requiere revisión — no se puede calcular el suministro' },
+  supply_id: { en: 'Patient ID', es: 'ID del paciente' },
+  supply_reason: { en: 'Medication and reason', es: 'Medicamento y motivo' },
+  supply_combined: { en: 'Combined or unclear medication entry', es: 'Registro combinado o medicamento poco claro' },
+  supply_unknown: { en: 'Unspecified medication', es: 'Medicamento sin especificar' },
+  supply_product: { en: 'Tablet strength or formulation unclear', es: 'Concentración o presentación de la tableta poco clara' },
+  supply_dose: { en: 'Scheduled dose unclear', es: 'Dosis programada poco clara' },
+  supply_schedule: { en: 'Frequency unclear', es: 'Frecuencia poco clara' },
+  supply_history: { en: 'Conflicting or unclear medication history', es: 'Historial del medicamento contradictorio o poco claro' },
+  supply_activity: { en: 'Chart activity date unavailable', es: 'Fecha de actividad clínica desconocida' },
   // ── tier labels ────────────────────────────────────────────
   tier_severa:    { es: 'Severa',     en: 'Severe' },
   tier_moderada:  { es: 'Moderada',   en: 'Moderate' },

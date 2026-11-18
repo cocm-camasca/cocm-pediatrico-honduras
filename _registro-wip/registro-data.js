@@ -593,7 +593,7 @@ async function fetchWithTimeout(url, opts, timeoutMs) {
   }
 }
 
-async function fetchTab(tabName) {
+async function fetchTab(tabName, { fresh = false } = {}) {
   const mode = getDataMode();
   const resolved = resolveTab(tabName);
   // Demo/offline mode: honor dataset toggle by picking from DEMO_TEST_DATA when
@@ -627,7 +627,7 @@ async function fetchTab(tabName) {
     let lastErr;
     for (let attempt = 1; attempt <= 4; attempt++) {
       try {
-        const res = await fetchWithTimeout(fullUrl, {}, 8000);
+        const res = await fetchWithTimeout(fullUrl, fresh ? { cache: 'no-store' } : {}, 8000);
         if (!res.ok) throw new Error(`Apps Script fetch failed for ${resolved}: ${res.status}`);
         const ct = res.headers.get('content-type') || '';
         if (!ct.includes('application/json')) {
@@ -642,6 +642,7 @@ async function fetchTab(tabName) {
           if (/UNAUTHORIZED/i.test(json.error || '')) err.code = 'UNAUTHORIZED';
           throw err;
         }
+        if (fresh && !Array.isArray(json.rows)) throw new Error('Missing registry rows');
         return json.rows || [];
       } catch (e) {
         lastErr = e;
