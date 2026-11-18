@@ -175,5 +175,6 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 ### 2026-11-18 - Codex desktop - Medication reconciliation and history
 - Completed: Recorded matching local and remote baseline e6ca2d6, Cloudflare Access redirect, existing Apps Script v2.2/version 9 source annotation and live registry headers. Audited the production medication fields, reconciled one authorized historical entry and verified the separate records and audit rows.
 - Completed: Added fixed-origin chart hyperlinks, a bilingual possible duplicate SSRI section and matching chart warning. Added sertraline to the entry dropdown and dated change/stop controls. Changes to dose or frequency through the pencil open a new history event.
-- In progress: Verify the release through the protected registry.
+- Completed: Pages deployed c5a8644 (run 44403638120). On the signed-in production site, confirmed the split history and SSRI warning, opened and cancelled Change and Stop, and verified the required unselected direction and fixed medication. Downloaded the production CSV and opened it read-only in Excel. Verified chart hyperlink formulas in both review sections.
+- In progress: Owner review of the live workflow. Verification left clinical medication histories untouched apart from the expressly requested historical split.
 - Blockers/notes: Clinic inventory, the Cloudflare administrative configuration and the deployed Apps Script version were not independently confirmed. Front-end release uses the existing schema and relay.
