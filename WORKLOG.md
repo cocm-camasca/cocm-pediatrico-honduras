@@ -178,3 +178,9 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: Pages deployed c5a8644 (run 44403638120). On the signed-in production site, confirmed the split history and SSRI warning, opened and cancelled Change and Stop, and verified the required unselected direction and fixed medication. Downloaded the production CSV and opened it read-only in Excel. Verified chart hyperlink formulas in both review sections.
 - In progress: Owner review of the live workflow. Verification left clinical medication histories untouched apart from the expressly requested historical split.
 - Blockers/notes: Clinic inventory, the Cloudflare administrative configuration and the deployed Apps Script version were not independently confirmed. Front-end release uses the existing schema and relay.
+
+### 2026-11-18 - Codex desktop - Medication corrections and report formats
+- Completed: Captured GitHub baseline 2630b3c, Cloudflare Access redirect, active Apps Script deployment v9, and medication and audit headers. Added review flags, targeted correction links, an all-patient overview, timestamped CSVs and copyable text. All ten existing medication supply regression checks passed.
+- Completed: Added an authenticated correction operation to the existing relay. A Sheets batch archives source actions, appends replacement records and records audit rows atomically. Related relay medication writes share a script lock. Existing access mode and Sheet headers are preserved.
+- In progress: Verify the published controls on the protected host.
+- Blockers/notes: Earlier status-label work remains local. No clinician-supplied medication data was changed during implementation.

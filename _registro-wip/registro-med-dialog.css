@@ -1,0 +1,20 @@
+.med-dialog {
+  box-sizing: border-box; width: min(42rem, 94vw); max-height: 88vh;
+  padding: var(--space-4); background: var(--color-surface); color: var(--color-text);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: auto;
+}
+.med-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.med-dialog h2, .med-dialog h3 { margin: 0 0 .65rem; }
+.med-dialog fieldset { margin: .8rem 0; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: .75rem; }
+.med-dialog legend { font-weight: 600; padding-inline: .3rem; }
+.med-dialog label { display: grid; gap: .2rem; min-width: 0; }
+.med-dialog input, .med-dialog select, .med-dialog textarea { font: inherit; padding: .4rem; min-width: 0; color: inherit; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.med-dialog .med-fields { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.6rem; }
+.med-dialog [hidden] { display:none !important; }
+.med-dialog .med-actions-bar { display:flex; flex-wrap:wrap; gap:.5rem; margin:.7rem 0; }
+.med-dialog pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:.9rem; tab-size:4; }
+.med-dialog .source-entry { border-inline-start:3px solid var(--color-border); padding-inline-start:.6rem; white-space:pre-wrap; }
+.med-dialog [role=alert] { color:var(--color-error); }
+.med-review-link { color:var(--color-primary); white-space:nowrap; font-weight:600; }
+.med-supply-action { display:inline-flex; align-items:center; gap:.4rem; flex-wrap:wrap; }
+@media(max-width:540px){.med-dialog .med-fields { grid-template-columns:1fr; } .med-supply-action button { text-align:start; }}

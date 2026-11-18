@@ -18,6 +18,8 @@ function loggedDay(value) {
 
 function action(raw) {
   const value = normalize(raw);
+  if (value === 'confirmed_active') return 'start';
+  if (value === 'confirmed_off') return 'off';
   if (/^(start|inicio|iniciar|reinicio|reiniciar|restart)$/.test(value)) return 'start';
   if (/^(stop|hold|suspend(er|ido)?|suspension|descontinuar|discontinuar|pausa)$/.test(value)) return 'off';
   if (/^(continuar|continue|continuacion)$/.test(value)) return 'continue';
@@ -27,7 +29,8 @@ function action(raw) {
 
 export { normalize, day, hondurasDate, loggedDay, action };
 
-function eventDate(m) {
+export function eventDate(m) {
+  if (['CONFIRMED_ACTIVE','CONFIRMED_OFF','UNRESOLVED'].includes(m.Action)) return loggedDay(m.Created_At);
   return day(m.Date || m.Start_Date) || loggedDay(m.Created_At);
 }
 
@@ -39,6 +42,7 @@ export function newestMedicationFirst(a, b) {
 export function currentMedIds(meds, today = hondurasDate.format(new Date())) {
   const seen = new Set(), current = new Set();
   for (const m of [...meds].sort(newestMedicationFirst)) {
+    if (String(m.Action).startsWith('CORRECTED:')) continue;
     if (eventDate(m) > today) continue;
     const drug = product(m.Medication)?.name;
     if (!drug || seen.has(drug)) continue;
@@ -54,7 +58,7 @@ export function hasDuplicateSsri(meds, today = hondurasDate.format(new Date())) 
   for (const med of meds) {
     const change = action(med.Action);
     if (change === 'unknown') continue;
-    const date = day(med.Date || med.Start_Date) || loggedDay(med.Created_At);
+    const date = eventDate(med);
     if (date > today) continue;
     const logged = Date.parse(med.Created_At) || 0;
     const parts = normalize(med.Medication).split(/[,;+&/]|\b(?:and|y|with|con)\b/);

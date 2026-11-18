@@ -28,6 +28,7 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Add medication correction flags, transactional split corrections, and downloadable or copyable supply and all-patient reports.
 - [x] Add chart links and a separate fluoxetine/sertraline reconciliation section to the supply CSV. Show the same warning on the chart and append dated change and stop events to medication history.
 - [x] Published the 30-day medication supply CSV (S-0004) and verified a test-dataset download from the signed-in registry.
 - [x] Dr. Fowler approved the live descriptive status selectors; closed Nick Ladd's registry report `S-0003` in `Sugerencias` with a verified resolution record.

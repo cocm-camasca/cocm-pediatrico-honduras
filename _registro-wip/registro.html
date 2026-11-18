@@ -609,9 +609,9 @@
         <button class="ghost" onclick="reloadData()" data-es="Recargar" data-en="Reload">Recargar</button>
         <button class="ghost" onclick="location.href='registro-sugerencias.html'" style="border-color: var(--color-primary); color: var(--color-primary);" data-es="💬 Sugerencias / Reportar problema" data-en="💬 Suggestions / Report a problem">💬 Sugerencias / Reportar problema</button>
         <div class="med-supply-action">
-          <button type="button" class="ghost" id="medSupplyButton" onclick="downloadMedicationSupply()">
-            <span aria-hidden="true">💊</span> <span data-i18n-label="supply_button">Informe de suministro de medicamentos</span>
-          </button>
+          <span aria-hidden="true">💊</span>
+          <button type="button" class="ghost" id="medSupplyButton" onclick="openMedicationReport(false)" data-i18n-label="supply_button">Informe de suministro de medicamentos</button>
+          <button type="button" class="ghost" onclick="openMedicationReport(true)" data-i18n-label="med_overview">Resumen de medicamentos de todos los pacientes</button>
         </div>
       </div>
 
@@ -861,9 +861,14 @@
 <!-- Toast host (populated by registro-i18n.js showToast) -->
 <div id="regToastHost"></div>
 
-<script src="registro-i18n.js?v=20261118ssri"></script>
+<link rel="stylesheet" href="registro-med-dialog.css?v=review1">
+<script type="module">
+  import * as review from './registro-med-review.mjs?v=review1';
+  window.medReview = review;
+</script>
+<script src="registro-i18n.js?v=20261118review"></script>
 <script src="registro-data.js?v=20261118ssri"></script>
-<script src="registro-app.js?v=20261118ssri"></script>
+<script src="registro-app.js?v=20261118review"></script>
 
 </body>
 </html>

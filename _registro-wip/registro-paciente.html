@@ -709,13 +709,16 @@
 <!-- Toast host -->
 <div id="regToastHost"></div>
 
-<script src="registro-i18n.js?v=20261118ssri"></script>
+<link rel="stylesheet" href="registro-med-dialog.css?v=review1">
+<script src="registro-i18n.js?v=20261118review"></script>
 <script src="registro-data.js?v=20261118ssri"></script>
 <script type="module">
-  import * as medicationHistory from './registro-med-history.mjs';
+  import * as medicationHistory from './registro-med-history.mjs?v=review1';
+  import * as review from './registro-med-review.mjs?v=review1';
   window.medicationHistory = medicationHistory;
+  window.medReview = review;
 </script>
-<script src="registro-paciente.js?v=20261118ssri"></script>
+<script src="registro-paciente.js?v=20261118review"></script>
 <script>
 (() => {
   const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;

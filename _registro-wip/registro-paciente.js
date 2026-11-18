@@ -152,6 +152,11 @@ async function load() {
     return;
   }
   render();
+  const link=new URL(location.href), targets=link.searchParams.get('correct');
+  if (targets && PSTATE.patient) {
+    link.searchParams.delete('correct');history.replaceState(null,'',link);
+    window.correctMedicationEntry(targets);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -947,10 +952,22 @@ function translateMedFreq(raw) {
   return raw.split('+').map(s => MAP[s.trim()] || s.trim()).join(' + ');
 }
 
+window.correctMedicationEntry = async function(targets) {
+  try {
+    const {openCorrection}=await import('./registro-correction.mjs?v=review1');
+    await openCorrection(PSTATE.patient.Patient_ID,targets.split(','),rows=>{
+      PSTATE.meds=rows.sort(window.medicationHistory.newestMedicationFirst);
+      render();
+    });
+  } catch {showToast(t('supply_failed'),{variant:'error'});}
+};
+
 function renderMeds(lang) {
   if (!PSTATE.meds.length) return `<p style="color:var(--color-text-muted);">${t('no_meds')}</p>`;
   const en = getLang() === 'en';
   const current = window.medicationHistory.currentMedIds(PSTATE.meds);
+  const issues = window.medReview.analyzeMedications(PSTATE.meds).issues;
+  const byId=new Map(issues.flatMap(i=>i.sources.map(r=>[r.Med_ID,i])));
   return PSTATE.meds.map(m => {
     const freqPart = m.Frequency ? ` <span style="color:var(--color-text-muted);font-weight:400;">· ${escapeHtml(translateMedFreq(m.Frequency))}</span>` : '';
     const notesLine = m.Notes ? `<div class="mnotes" style="grid-column:1 / -1;">${renderMarkdownInline(m.Notes)}</div>` : '';
@@ -968,17 +985,21 @@ function renderMeds(lang) {
     const metaLine = (startedLbl || loggedLbl)
       ? `<div style="grid-column:1 / -1;display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">${startedLbl}${loggedLbl}</div>`
       : '';
-    const medActionBtns = `<div class="med-actions">
+    const issue=byId.get(m.Med_ID), archived=String(m.Action).startsWith('CORRECTED:');
+    const medActionBtns = archived ? '' : `<div class="med-actions">
+      ${issue ? `<button type="button" class="ghost" data-id="${escapeHtml(m.Med_ID)}" title="${escapeHtml(window.medReview.reviewReason([issue],t))}" onclick="correctMedicationEntry(this.dataset.id)">💊 ${t('med_correct')}</button>` : ''}
       ${current.has(m.Med_ID) ? `<button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'change')">${t('med_event_change')}</button>
         <button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'stop')">${t('med_event_stop')}</button>` : ''}
       <button type="button" class="ghost" onclick="openEditMedModal('${escapeHtml(m.Med_ID)}')" title="${en?'Edit':'Editar'}" aria-label="${en?'Edit':'Editar'}">✏️</button>
       <button type="button" class="ghost" style="color:var(--color-error);border-color:color-mix(in srgb, var(--color-error) 35%, transparent);" onclick="confirmDeleteMed('${escapeHtml(m.Med_ID)}')" title="${en?'Delete':'Eliminar'}" aria-label="${en?'Delete':'Eliminar'}">🗑</button>
     </div>`;
+    const stateLabel = {CONFIRMED_ACTIVE:'med_confirmed',CONFIRMED_OFF:'med_confirmed_off',UNRESOLVED:'med_unclear'}[m.Action];
+    const actionLabel = archived ? t('med_corrected')+' · '+translateMedAction(m.Action.slice(10)) : stateLabel ? t(stateLabel) : translateMedAction(m.Action);
     return `
     <div class="med-row">
       <div class="mdate">${m.Date}</div>
       <div class="mmed">${escapeHtml(m.Medication)} ${m.Dose?`<span style="color:var(--color-text-muted);font-weight:400;">· ${escapeHtml(m.Dose)}</span>`:''}${freqPart}${extBadge}</div>
-      <div class="maction">${escapeHtml(translateMedAction(m.Action)||'')}</div>
+      <div class="maction">${escapeHtml(actionLabel||'')}</div>
       <div class="mpresc" style="grid-column:span 2;">${escapeHtml(m.Reason||'')}${m.Reason && m.Prescriber ? ' · ' : ''}${escapeHtml(m.Prescriber||'')}</div>
       ${metaLine}
       ${notesLine}

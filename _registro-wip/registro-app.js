@@ -18,25 +18,24 @@ let STATE = {
   groupByCondition: false, // when true, sections list by primary condition group
 };
 
-window.downloadMedicationSupply = async function downloadMedicationSupply() {
-  const button = document.getElementById('medSupplyButton');
-  if (button.disabled) return;
-  const label = button.querySelector('[data-i18n-label]');
-  button.disabled = true;
-  label.dataset.i18nLabel = 'supply_loading';
-  label.textContent = t('supply_loading');
-  try {
-    const { downloadSupplyReport } = await import('./registro-supply.mjs?v=20261118ssri');
-    await downloadSupplyReport();
-  } catch (error) {
-    console.warn('[Medication supply]', error.message);
-    showToast(t('supply_failed'), { variant: 'error', retry: window.downloadMedicationSupply });
-  } finally {
-    button.disabled = false;
-    label.dataset.i18nLabel = 'supply_button';
-    label.textContent = t('supply_button');
-  }
+window.openMedicationReport = async function(overview) {
+  try { const {openReport}=await import('./registro-report-ui.mjs?v=review1'); openReport(overview); }
+  catch { showToast(t('supply_failed'),{variant:'error'}); }
 };
+
+let reviewedMeds, reviewedDay, medicationIssues=new Map();
+function refreshMedicationFlags() {
+  const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Tegucigalpa'}).format(new Date());
+  if (STATE.meds===reviewedMeds && today===reviewedDay) return;
+  reviewedMeds=STATE.meds;reviewedDay=today;medicationIssues=new Map();
+  for (const [id,rows] of window.medReview.groupPatients(STATE.meds)) {
+    const {issues}=window.medReview.analyzeMedications(rows,today);
+    if (issues.length) medicationIssues.set(id,issues);
+  }
+}
+
+window.addEventListener('storage',e=>{if(e.key==='coCMCamasca.medCorrection') loadAndRender();});
+window.addEventListener('pageshow',e=>{if(e.persisted) loadAndRender();});
 
 // ════════════════════════════════════════════════════════════════
 // LANGUAGE TOGGLE
@@ -1026,6 +1025,7 @@ function toggleGroupBy() {
 if (typeof window !== 'undefined') window.toggleGroupBy = toggleGroupBy;
 
 function renderAll() {
+  refreshMedicationFlags();
   const lang = getLang();
   const list = filterAndSortPatients(STATE.enrichedPatients);
 
@@ -1475,6 +1475,12 @@ function renderPatientRow(p, lang, opts={}) {
   const statusActive = (!p.Status) || ['activo','estable','stable','active'].includes(String(p.Status).toLowerCase());
   const needsUpdate = hasAnyScore && statusActive && (lastScoreDays != null) && lastScoreDays > 28;
   const flags = [];
+  const issues = medicationIssues.get(p.Patient_ID);
+  if (issues) {
+    const reason=escapeHtml(window.medReview.reviewReason(issues,t));
+    const url=escapeHtml(window.medReview.chartUrl(p.Patient_ID,STATE.dataset==='test',issues));
+    flags.push(`<a class="med-review-link" href="${url}" onclick="event.stopPropagation()" title="${reason}" aria-description="${reason}">💊 ${t('med_flag')}</a>`);
+  }
   if (p._safetyActive || opts.pinned) flags.push(`<span class="pat-row-safety">${t('flag_safety')}</span>`);
   if (typeof isTruthyFlag === 'function' && isTruthyFlag(p.Brigade_Flag)) {
     const brigadeTip = p.Brigade_Reason ? `${t('flag_brigade_tip')} — ${p.Brigade_Reason}` : t('flag_brigade_tip');

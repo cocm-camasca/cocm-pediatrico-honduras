@@ -1,5 +1,6 @@
 // Loaded only when the dashboard's supply button is clicked.
-import { normalize, day, hondurasDate, loggedDay, action, product, hasDuplicateSsri } from './registro-med-history.mjs';
+import {day, loggedDay, hondurasDate, hasDuplicateSsri} from './registro-med-history.mjs?v=review1';
+import {analyzeMedications, groupPatients, reviewReason, chartUrl} from './registro-med-review.mjs?v=review1';
 
 function priorYear(date) {
   const year = Number(date.slice(0, 4)) - 1;
@@ -49,186 +50,111 @@ function chartActivity(patients, visits, meds, audit, tables, today) {
   return latest;
 }
 
-function frequency(raw) {
-  const text = normalize(raw);
-  const marker = /(?:\bprn\b|\bas needed\b|\bsegun (?:sea )?neces(?:idad|ario)\b)/;
-  const prn = marker.test(text);
-  const base = text.replace(marker, '').replace(/\s*\+\s*$/, '').trim();
-  if (!base) return {times: prn ? 0 : null, prn};
-  const patterns = [
-    /^(qd(?:-am|-pm)?|qhs(?:, (?:before bed|al acostarse))?|daily(?:, every (?:morning|evening))?|once daily|once a day|nightly|diari[oa](?:, cada (?:manana|noche))?|cada (?:dia|manana|noche)|1 vez al dia|una vez al dia)$/,
-    /^(bid(?: \(2 veces al dia\))?|twice daily|2 veces al dia|dos veces al dia)$/,
-    /^(tid(?: \(3 veces al dia\))?|three times daily|3 veces al dia|tres veces al dia)$/
-  ];
-  const index = patterns.findIndex(pattern => pattern.test(base));
-  return {times: index < 0 ? null : index + 1, prn};
-}
 
-function regimen(events, today) {
-  let dated = events.map(m => ({
-    m, date: day(m.Date || m.Start_Date), logged: Date.parse(m.Created_At) || 0
-  })).filter(e => !e.date || e.date <= today);
-  if (dated.length > 1 && dated.some(e => !e.date)) {
-    // A subsequent dated stop or fully specified change can supersede an
-    // undated import when the import was already logged before that date.
-    const undated = dated.filter(e => !e.date);
-    const reset = dated.filter(e => e.date && (action(e.m.Action) === 'off' ||
-      (action(e.m.Action) === 'change' && e.m.Dose && e.m.Frequency)) &&
-      undated.every(u => loggedDay(u.m.Created_At) && loggedDay(u.m.Created_At) < e.date))
-      .sort((a,b) => b.date.localeCompare(a.date))[0];
-    if (!reset) return {error:'supply_history'};
-    dated = dated.filter(e => e.date >= reset.date);
-  }
-  dated.sort((a,b) => a.date.localeCompare(b.date) || a.logged - b.logged);
-  let current = null;
-  let prior = null;
-  let conflict = false;
-  let stopped = false;
-  let extraPrn = false;
-  for (const event of dated) {
-    const {m} = event;
-    const change = action(m.Action);
-    const f = frequency(m.Frequency);
-    const doseMatch = /^(\d+(?:[.,]\d+)?)\s*mg$/i.exec(String(m.Dose || '').trim());
-    const next = {strength:product(m.Medication).strength, dose:doseMatch ? Number(doseMatch[1].replace(',','.')) : null, ...f};
-    const sameDay = prior && prior.date === event.date;
-    const unordered = sameDay && (!prior.logged || !event.logged || prior.logged === event.logged);
-    const additionalPrn = change === 'start' && current && current.strength && current.strength === next.strength
-      && ((next.times === 0 && next.prn && current.times > 0) || (current.times === 0 && current.prn && next.times > 0));
-    if (additionalPrn && !conflict) {
-      extraPrn = true;
-      if (next.times > 0) current = next;
-    } else if (unordered && (prior.change !== change || JSON.stringify(prior.next) !== JSON.stringify(next))) {
-      conflict = true;
-    } else if (change === 'off') {
-      current = null;
-      conflict = false;
-      stopped = true;
-      extraPrn = false;
-    } else if (change === 'unknown' || (stopped && change !== 'start')) {
-      conflict = true;
-    } else if (change === 'start' && current && JSON.stringify(current) !== JSON.stringify(next)) {
-      conflict = true;
-    } else {
-      // A bare continuation repeats the known regimen. A change must document its new dose.
-      if (current && change === 'continue') {
-        if (!m.Dose) next.dose = current.dose;
-        if (!m.Frequency) Object.assign(next, {times:current.times, prn:current.prn});
-        next.strength ??= current.strength;
-      }
-      if (extraPrn && change === 'change' && current.strength !== next.strength) {
-        // The history doesn't say which product now supplies the separate PRN instruction.
-        conflict = true;
-        prior = {...event, change, next};
-        continue;
-      }
-      current = next;
-      stopped = false;
-      if (!sameDay && (change === 'change' || change === 'start')) conflict = false;
-    }
-    prior = {...event, change, next};
-  }
-  if (conflict) return {error:'supply_history'};
-  if (!current) return null;
-  if (extraPrn) current.prn = true;
-  if (!current.strength) return {error:'supply_product'};
-  if (current.times === null) return {...current, error:'supply_schedule'};
-  if (current.times && !(current.dose > 0)) return {...current, error:'supply_dose'};
-  return {strength:current.strength, prn:current.prn, tablets:30 * ((current.dose || 0) / current.strength * current.times + Number(current.prn))};
-}
-
-export function supplyRows({patients, visits, meds, audit, tables, today, translate:tr, test = false, patientCell = id => id}) {
+export function supplyRows({patients, visits, meds, audit, tables, today, translate:tr, test=false,
+    patientCell=id=>id, correctionCell=()=>tr('med_correct'), overview=false}) {
   const cutoff = priorYear(today);
   const activity = chartActivity(patients, visits, meds, audit, tables, today);
-  const roster = new Set(patients.map(p => p.Patient_ID).filter(Boolean));
-  const histories = new Map(), totals = new Map(), review = new Map();
-  const eligibleMeds = new Map();
-  function flag(id, label, reason) {
-    if (!review.has(id)) review.set(id, new Set());
-    review.get(id).add(label + ' — ' + tr(reason));
-  }
-  for (const m of meds) {
-    const id = m.Patient_ID;
-    if (!roster.has(id)) continue;
-    if (day(m.Date || m.Start_Date) > today) continue;
-    const last = activity.get(id);
-    if (last && last < cutoff) continue;
-    if (!eligibleMeds.has(id)) eligibleMeds.set(id, []);
-    eligibleMeds.get(id).push(m);
-    const med = product(m.Medication);
-    if (!last || !med) {
-      flag(id, String(m.Medication || tr('supply_unknown')), last ? 'supply_combined' : 'supply_activity');
+  const groups = groupPatients(meds), totals = new Map(), review = [], overlaps = [], overviewRows = [];
+  for (const id of [...new Set(patients.map(p=>p.Patient_ID).filter(Boolean))].sort()) {
+    const entries = groups.get(id);
+    if (!entries) continue;
+    const last = activity.get(id), inWindow = !!last && last >= cutoff;
+    if (!overview && last && !inWindow) continue;
+    const {issues,current} = analyzeMedications(entries,today);
+    const reasons = reviewReason(issues,tr);
+    const overlap = hasDuplicateSsri(entries,today);
+    if (overview) {
+      const lines = current.map(({name,state,latest}) => {
+        if (state.error === 'supply_history' || state.error === 'med_unclear') return name+' — '+tr(state.error);
+        const directions = state.frequency || latest.Frequency || '';
+        const prn = state.prn && !/prn|as needed|seg[uú]n/i.test(directions) ? ' + PRN' : '';
+        return [name+(state.strength ? ' ('+state.strength+' mg)' : ''), state.dose ? state.dose+' mg' : latest.Dose,
+          directions+prn].filter(Boolean).join(' · ');
+      });
+      for (const i of issues) if (!current.some(c=>c.name===i.label)) lines.push(i.label || tr('supply_unknown'));
+      overviewRows.push([patientCell(id),lines.join('\n') || tr('med_none_current'),
+        !last ? tr('med_unknown') : tr(inWindow?'med_yes':'med_no'),[reasons,overlap && tr('ssri_review_title')].filter(Boolean).join(' / ')]);
       continue;
     }
-    if (!histories.has(id)) histories.set(id, new Map());
-    const byDrug = histories.get(id);
-    if (!byDrug.has(med.name)) byDrug.set(med.name, []);
-    byDrug.get(med.name).push(m);
-  }
-  for (const [id, byDrug] of histories) {
-    for (const [name, entries] of byDrug) {
-      const result = regimen(entries, today);
-      if (!result) continue;
-      if (result.error) flag(id, name, result.error);
-      if (!result.strength) continue;
-      const key = name + '|' + result.strength;
-      const row = totals.get(key) || {name, strength:result.strength, tablets:null, patients:0, prn:0};
-      if (!result.error) row.tablets = (row.tablets || 0) + result.tablets;
+    if (!last) {
+      const undated = entries.filter(m=>!String(m.Action).startsWith('CORRECTED:') && (!m.Date || day(m.Date)<=today));
+      if (undated.length && !issues.length) issues.push({label:undated[0].Medication,reason:'supply_activity',sources:[undated[0]]});
+    }
+    if (issues.length) review.push([patientCell(id),reviewReason(issues,tr),correctionCell(id,issues)]);
+    if (overlap) overlaps.push([patientCell(id),tr('ssri_pair')]);
+    if (!inWindow) continue;
+    for (const {name,state} of current) {
+      if (!state.strength) continue;
+      const key = name+'|'+state.strength;
+      const row = totals.get(key) || {name,strength:state.strength,tablets:null,patients:0,prn:0};
+      if (!state.error) row.tablets = (row.tablets || 0)+state.tablets;
       row.patients++;
-      if (result.prn) row.prn++;
-      totals.set(key, row);
+      if (state.prn) row.prn++;
+      totals.set(key,row);
     }
   }
-  const rows = [[tr('supply_title'), today]];
+  const rows = [[tr(overview?'med_overview':'supply_title'),today]];
   if (test) rows.push([tr('supply_test')]);
-  if (review.size) rows.push([tr('supply_partial')]);
+  const hint = [tr('med_link_hint')];
+  if (overview) return [...rows,hint,['supply_id','med_directions','med_window','med_review_notes'].map(tr),...overviewRows];
+  if (review.length) rows.push([tr('supply_partial')]);
   rows.push(['supply_med','supply_strength','supply_tablets','supply_people','supply_prn'].map(tr));
-  for (const r of [...totals.values()].sort((a,b) => a.name.localeCompare(b.name) || a.strength-b.strength)) {
-    rows.push([r.name, r.strength, r.tablets === null ? '' : Number(r.tablets.toFixed(6)), r.patients, r.prn]);
+  for (const r of [...totals.values()].sort((a,b)=>a.name.localeCompare(b.name)||a.strength-b.strength)) {
+    rows.push([r.name,r.strength,r.tablets===null?'':Number(r.tablets.toFixed(6)),r.patients,r.prn]);
   }
-  if (review.size) {
-    rows.push([], [tr('supply_review')], [tr('supply_id'), tr('supply_reason')]);
-    for (const id of [...review.keys()].sort()) rows.push([patientCell(id), [...review.get(id)].sort().join(' / ')]);
-  }
-  const overlaps = [...eligibleMeds.keys()].filter(id => hasDuplicateSsri(eligibleMeds.get(id), today)).sort();
-  if (overlaps.length) {
-    rows.push([], [tr('ssri_review_title')], [tr('supply_id'), tr('ssri_review_pair')]);
-    for (const id of overlaps) rows.push([patientCell(id), tr('ssri_pair')]);
-  }
+  if (review.length) rows.push([], [tr('supply_review')],hint,[tr('supply_id'),tr('supply_reason'),tr('med_correct')],...review);
+  if (overlaps.length) rows.push([], [tr('ssri_review_title')],hint,[tr('supply_id'),tr('ssri_review_pair')],...overlaps);
   return rows;
 }
 
 class PatientChartLink {
-  constructor(id, test) {
-    this.formula = '=HYPERLINK("https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id='
-      + encodeURIComponent(id) + '&dataset=' + (test ? 'test' : 'real') + '","' + id + '")';
-  }
+  constructor(label, url) { this.label=label; this.url=url; }
 }
 
 export function csvText(rows) {
-  return '\uFEFF' + rows.map(row => row.map(value => {
-    let text = value instanceof PatientChartLink ? value.formula : String(value);
-    if (typeof value === 'string' && /^\s*[=+\-@\t\r\n]/.test(text)) text = "'" + text;
-    return '"' + text.replace(/"/g, '""') + '"';
-  }).join(',')).join('\r\n') + '\r\n';
+  return '\uFEFF'+rows.map(row=>row.map(value=>{
+    let text=String(value);
+    if (value instanceof PatientChartLink) {
+      text='=HYPERLINK("'+value.url+'","'+value.label.replace(/"/g,'""')+'")';
+    } else if (typeof value==='string' && /^\s*[=+\-@\t\r\n]/.test(text)) text="'"+text;
+    return '"'+text.replace(/"/g,'""')+'"';
+  }).join(',')).join('\r\n')+'\r\n';
 }
 
-export async function downloadSupplyReport() {
-  const tables = {patients:resolveTab('Pacientes'), visits:resolveTab('Visitas'), meds:resolveTab('Medicamentos')};
-  const mode = getDataMode();
-  if (mode !== 'appsscript' && mode !== 'demo') throw new Error('Live registry connection required');
-  const names = ['Pacientes','Visitas','Medicamentos','Auditoria'];
-  const [patients, visits, meds, audit] = await Promise.all(names.map(name => fetchTab(name, {fresh:true})));
-  if (tables.patients !== resolveTab('Pacientes') || mode !== getDataMode()) throw new Error('Dataset changed');
-  const today = hondurasDate.format(new Date());
-  const test = mode === 'demo' || tables.meds.endsWith('_Test');
-  // Only our fixed-origin, validated patient links may be formulas in the CSV.
-  const patientCell = id => /^[A-Za-z0-9_-]+$/.test(id) ? new PatientChartLink(id, test) : String(id);
-  const rows = supplyRows({patients, visits, meds, audit, tables, today, test, patientCell, translate:key => t(key)});
-  const url = URL.createObjectURL(new Blob([csvText(rows)], {type:'text/csv;charset=utf-8'}));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = 'CoCM-' + (test ? 'TEST-' : '') + '30d-' + today + '.csv';
-  document.body.append(link);
-  try { link.click(); } finally { link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
+export async function prepareReport(overview) {
+  const mode=getDataMode(), tables={patients:resolveTab('Pacientes'),visits:resolveTab('Visitas'),meds:resolveTab('Medicamentos')};
+  if (mode!=='appsscript' && mode!=='demo') throw Error('Registry connection required');
+  const [patients,visits,meds,audit]=await Promise.all(['Pacientes','Visitas','Medicamentos','Auditoria'].map(n=>fetchTab(n,{fresh:true})));
+  if (tables.patients!==resolveTab('Pacientes') || mode!==getDataMode()) throw Error('Dataset changed');
+  const now=new Date(), today=hondurasDate.format(now), test=mode==='demo'||tables.meds.endsWith('_Test');
+  const time=new Intl.DateTimeFormat('en-GB',{timeZone:'America/Tegucigalpa',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(now).replace(/:/g,'.');
+  const rows=supplyRows({patients,visits,meds,audit,tables,today,test,overview,translate:t,
+    patientCell:id=>new PatientChartLink(String(id),chartUrl(id,test)),
+    correctionCell:(id,issues)=>new PatientChartLink(t('med_correct'),chartUrl(id,test,issues))});
+  const filename='CoCM '+(overview?'All-patient Medication Overview':'Medication Supply Report')+(test?' TEST ':' ')+today+' '+time+'.csv';
+  return {rows,filename};
+}
+
+export function downloadReport({rows,filename}) {
+  const url=URL.createObjectURL(new Blob([csvText(rows)],{type:'text/csv;charset=utf-8'}));
+  const link=document.createElement('a'); link.href=url; link.download=filename; document.body.append(link);
+  try { link.click(); } finally { link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000); }
+}
+
+// Render links as anchors; all chart-derived strings remain text nodes.
+export function reportText(rows,overview) {
+  const pre=document.createElement('pre');
+  for (const row of rows) {
+    if (overview && row[0] instanceof PatientChartLink) {
+      append(row[0]); pre.append('\n'+String(row[1]).split('\n').map(s=>'  '+s).join('\n')+'\n  '+t('med_window')+' · '+row[2]+(row[3]?'\n  '+row[3]:'')+'\n\n');
+    } else {
+      row.forEach((cell,i)=>{ if(i)pre.append('\t'); append(cell); }); pre.append('\n');
+    }
+  }
+  function append(value) {
+    if (!(value instanceof PatientChartLink)) { pre.append(String(value));return; }
+    const a=document.createElement('a'); a.textContent=value.label; a.href=value.url; pre.append(a);
+  }
+  return pre;
 }
