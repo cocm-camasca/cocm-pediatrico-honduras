@@ -168,5 +168,6 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 
 ### 2026-11-18 - Codex desktop - Medication supply report release
 - Completed: Dr. Fowler reviewed the local preview and authorized publication. Scoped the release to the report, its tests and release notes. Earlier status-label edits remain local.
-- In progress: Verify GitHub Pages deployment and a report download from the signed-in registry.
+- Completed: GitHub Pages deployed cfd6f35 successfully (run 44395489868). Verified the button on the signed-in production dashboard and downloaded the dated CSV using the protected test dataset. The file contained the test-data label, totals header and review section. Restored the dashboard to its original Real dataset.
+- In progress: Dr. Fowler plans to review the live website.
 - Blockers/notes: The release uses the existing Cloudflare, Apps Script and Sheet configuration.

@@ -12,7 +12,6 @@
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
 
 ## Upcoming
-- [~] S-0004 medication supply CSV release approved. Verify a download from the signed-in registry after deployment.
 - [ ] Re-check Apps Script deployment facts: active `/exec` URL, deployment mode, current version.
 - [ ] Verify whether `REG_DEFAULT_APPS_SCRIPT_URL` in `_registro-wip/registro-data.js` matches the active Apps Script deployment.
 - [ ] Verify whether known `Medicamentos` column drift is still unresolved.
@@ -29,6 +28,7 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Published the 30-day medication supply CSV (S-0004) and verified a test-dataset download from the signed-in registry.
 - [x] Dr. Fowler approved the live descriptive status selectors; closed Nick Ladd's registry report `S-0003` in `Sugerencias` with a verified resolution record.
 - [x] Dr. Fowler confirmed that the first status-label/search release is visible on the protected registry and requested fuller descriptions in every status selector.
 - [x] Completed Jennifer Farmer, MD's registry access by adding her existing active psychiatrist profile to the Cloudflare Access policy; the saved policy was verified.
