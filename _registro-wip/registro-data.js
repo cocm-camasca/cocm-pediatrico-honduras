@@ -762,7 +762,7 @@ async function fetchAll() {
 // ════════════════════════════════════════════════════════════════
 // WRITE LAYER (Apps Script only; queues locally otherwise)
 // ════════════════════════════════════════════════════════════════
-async function writeRow(tab, row) {
+async function writeRow(tab, row, { attempts = 3 } = {}) {
   const resolved = resolveTab(tab);
   const url = cfgGet(REG_LS.APPS_SCRIPT_URL);
   if (!url) {
@@ -774,7 +774,7 @@ async function writeRow(tab, row) {
   }
   // Retry POST up to 3 times on hang/abort
   let lastErr;
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       const res = await fetchWithTimeout(url, {
         method: 'POST',
@@ -789,7 +789,7 @@ async function writeRow(tab, row) {
       return data;
     } catch (e) {
       lastErr = e;
-      if (attempt < 3) await new Promise(r => setTimeout(r, 500 * attempt));
+      if (attempt < attempts) await new Promise(r => setTimeout(r, 500 * attempt));
     }
   }
   throw lastErr;
@@ -1163,6 +1163,7 @@ const DEMO_TEST_DATA = {"Pacientes":[{"Patient_ID":"CCM-0100","Patient_Name":"Ca
 const MED_FORMULARY = [
   'Gabapentin 300 mg',
   'Fluoxetine 20 mg',
+  'Sertraline 50 mg',
   'Hydroxyzine 25 mg',
   'Guanfacine 1 mg',
   'Levetiracetam (Keppra) 500 mg',

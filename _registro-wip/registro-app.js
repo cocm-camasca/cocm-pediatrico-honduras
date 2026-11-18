@@ -26,7 +26,7 @@ window.downloadMedicationSupply = async function downloadMedicationSupply() {
   label.dataset.i18nLabel = 'supply_loading';
   label.textContent = t('supply_loading');
   try {
-    const { downloadSupplyReport } = await import('./registro-supply.mjs?v=20261118');
+    const { downloadSupplyReport } = await import('./registro-supply.mjs?v=20261118ssri');
     await downloadSupplyReport();
   } catch (error) {
     console.warn('[Medication supply]', error.message);

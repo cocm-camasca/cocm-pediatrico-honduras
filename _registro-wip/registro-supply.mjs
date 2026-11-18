@@ -1,32 +1,5 @@
 // Loaded only when the dashboard's supply button is clicked.
-const normalize = value => String(value ?? '').trim().toLowerCase().normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
-
-const aliases = new Map();
-for (const family of [
-  ['Fluoxetine', 'fluoxetina', 'prozac'], ['Hydroxyzine', 'hidroxizina', 'hydrozicine', 'atarax'],
-  ['Gabapentin', 'gabapentina'], ['Guanfacine', 'guanfacina'], ['Diazepam'],
-  ['Levetiracetam', 'keppra', 'levetiracetam (keppra)'], ['Quetiapine', 'quetiapina', 'seroquel', 'quetiapine (seroquel)'],
-  ['Melatonin', 'melatonina'], ['Sertraline', 'sertralina', 'zoloft', 'sertraline (zoloft)'],
-  ['Risperidone', 'risperidona', 'risperdal'], ['Clonazepam']
-]) {
-  for (const name of family) aliases.set(normalize(name), family[0]);
-}
-
-function day(value) {
-  const match = /^(\d{4}-\d{2}-\d{2})(?:$|T|\s)/.exec(String(value ?? '').trim());
-  if (!match) return '';
-  const timestamp = Date.parse(match[1] + 'T00:00:00Z');
-  return Number.isFinite(timestamp) && new Date(timestamp).toISOString().startsWith(match[1]) ? match[1] : '';
-}
-
-const hondurasDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'America/Tegucigalpa'});
-function loggedDay(value) {
-  if (!day(value)) return '';
-  if (!/T.*(?:Z|[+-]\d\d:\d\d)$/i.test(value)) return day(value);
-  const time = Date.parse(value);
-  return Number.isFinite(time) ? hondurasDate.format(time) : '';
-}
+import { normalize, day, hondurasDate, loggedDay, action, product, hasDuplicateSsri } from './registro-med-history.mjs';
 
 function priorYear(date) {
   const year = Number(date.slice(0, 4)) - 1;
@@ -76,17 +49,6 @@ function chartActivity(patients, visits, meds, audit, tables, today) {
   return latest;
 }
 
-// Only the medication/product field can document strength. Dose is a distinct field.
-function product(raw) {
-  const text = normalize(raw).replace(/(\d),(\d)/g, '$1.$2');
-  if (!text || /[,;+\/&]|\b(and|with|con|y)\b/.test(text)) return null;
-  const match = /^([a-z][a-z ()-]*?)(?:\s+(\d+(?:\.\d+)?)\s*mg)?(?:\s+(?:tablets?|tabs?|tabletas?|comprimidos?))?$/.exec(text);
-  if (!match) return null;
-  const name = match[1].trim();
-  const tabletProduct = aliases.has(name) || /\b(tablets?|tabs?|tabletas?|comprimidos?)$/.test(text);
-  return {name: aliases.get(name) || name, strength: tabletProduct ? Number(match[2]) || null : null};
-}
-
 function frequency(raw) {
   const text = normalize(raw);
   const marker = /(?:\bprn\b|\bas needed\b|\bsegun (?:sea )?neces(?:idad|ario)\b)/;
@@ -102,20 +64,21 @@ function frequency(raw) {
   return {times: index < 0 ? null : index + 1, prn};
 }
 
-function action(raw) {
-  const value = normalize(raw);
-  if (/^(start|inicio|iniciar|reinicio|reiniciar|restart)$/.test(value)) return 'start';
-  if (/^(stop|hold|suspend(er|ido)?|suspension|descontinuar|discontinuar|pausa)$/.test(value)) return 'off';
-  if (/^(continuar|continue|continuacion)$/.test(value)) return 'continue';
-  if (/^(increase|decrease|adjust|change|titrate|ajuste|titular|titulacion|aumentar|disminuir|cambio)$/.test(value)) return 'change';
-  return 'unknown';
-}
-
 function regimen(events, today) {
-  const dated = events.map(m => ({
+  let dated = events.map(m => ({
     m, date: day(m.Date || m.Start_Date), logged: Date.parse(m.Created_At) || 0
   })).filter(e => !e.date || e.date <= today);
-  if (dated.length > 1 && dated.some(e => !e.date)) return {error:'supply_history'};
+  if (dated.length > 1 && dated.some(e => !e.date)) {
+    // A subsequent dated stop or fully specified change can supersede an
+    // undated import when the import was already logged before that date.
+    const undated = dated.filter(e => !e.date);
+    const reset = dated.filter(e => e.date && (action(e.m.Action) === 'off' ||
+      (action(e.m.Action) === 'change' && e.m.Dose && e.m.Frequency)) &&
+      undated.every(u => loggedDay(u.m.Created_At) && loggedDay(u.m.Created_At) < e.date))
+      .sort((a,b) => b.date.localeCompare(a.date))[0];
+    if (!reset) return {error:'supply_history'};
+    dated = dated.filter(e => e.date >= reset.date);
+  }
   dated.sort((a,b) => a.date.localeCompare(b.date) || a.logged - b.logged);
   let current = null;
   let prior = null;
@@ -174,11 +137,12 @@ function regimen(events, today) {
   return {strength:current.strength, prn:current.prn, tablets:30 * ((current.dose || 0) / current.strength * current.times + Number(current.prn))};
 }
 
-export function supplyRows({patients, visits, meds, audit, tables, today, translate:tr, test = false}) {
+export function supplyRows({patients, visits, meds, audit, tables, today, translate:tr, test = false, patientCell = id => id}) {
   const cutoff = priorYear(today);
   const activity = chartActivity(patients, visits, meds, audit, tables, today);
   const roster = new Set(patients.map(p => p.Patient_ID).filter(Boolean));
   const histories = new Map(), totals = new Map(), review = new Map();
+  const eligibleMeds = new Map();
   function flag(id, label, reason) {
     if (!review.has(id)) review.set(id, new Set());
     review.get(id).add(label + ' — ' + tr(reason));
@@ -189,6 +153,8 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
     if (day(m.Date || m.Start_Date) > today) continue;
     const last = activity.get(id);
     if (last && last < cutoff) continue;
+    if (!eligibleMeds.has(id)) eligibleMeds.set(id, []);
+    eligibleMeds.get(id).push(m);
     const med = product(m.Medication);
     if (!last || !med) {
       flag(id, String(m.Medication || tr('supply_unknown')), last ? 'supply_combined' : 'supply_activity');
@@ -222,14 +188,26 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
   }
   if (review.size) {
     rows.push([], [tr('supply_review')], [tr('supply_id'), tr('supply_reason')]);
-    for (const id of [...review.keys()].sort()) rows.push([id, [...review.get(id)].sort().join(' / ')]);
+    for (const id of [...review.keys()].sort()) rows.push([patientCell(id), [...review.get(id)].sort().join(' / ')]);
+  }
+  const overlaps = [...eligibleMeds.keys()].filter(id => hasDuplicateSsri(eligibleMeds.get(id), today)).sort();
+  if (overlaps.length) {
+    rows.push([], [tr('ssri_review_title')], [tr('supply_id'), tr('ssri_review_pair')]);
+    for (const id of overlaps) rows.push([patientCell(id), tr('ssri_pair')]);
   }
   return rows;
 }
 
+class PatientChartLink {
+  constructor(id, test) {
+    this.formula = '=HYPERLINK("https://registry.cocm-camasca.org/_registro-wip/registro-paciente.html?id='
+      + encodeURIComponent(id) + '&dataset=' + (test ? 'test' : 'real') + '","' + id + '")';
+  }
+}
+
 export function csvText(rows) {
   return '\uFEFF' + rows.map(row => row.map(value => {
-    let text = String(value);
+    let text = value instanceof PatientChartLink ? value.formula : String(value);
     if (typeof value === 'string' && /^\s*[=+\-@\t\r\n]/.test(text)) text = "'" + text;
     return '"' + text.replace(/"/g, '""') + '"';
   }).join(',')).join('\r\n') + '\r\n';
@@ -244,7 +222,9 @@ export async function downloadSupplyReport() {
   if (tables.patients !== resolveTab('Pacientes') || mode !== getDataMode()) throw new Error('Dataset changed');
   const today = hondurasDate.format(new Date());
   const test = mode === 'demo' || tables.meds.endsWith('_Test');
-  const rows = supplyRows({patients, visits, meds, audit, tables, today, test, translate:key => t(key)});
+  // Only our fixed-origin, validated patient links may be formulas in the CSV.
+  const patientCell = id => /^[A-Za-z0-9_-]+$/.test(id) ? new PatientChartLink(id, test) : String(id);
+  const rows = supplyRows({patients, visits, meds, audit, tables, today, test, patientCell, translate:key => t(key)});
   const url = URL.createObjectURL(new Blob([csvText(rows)], {type:'text/csv;charset=utf-8'}));
   const link = document.createElement('a');
   link.href = url;

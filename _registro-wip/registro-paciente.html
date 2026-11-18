@@ -275,6 +275,20 @@
       position: relative;
     }
     .med-row:last-child { border: none; }
+    .med-event-dialog {
+      width: min(440px, 92vw); max-height: 90vh; overflow: auto;
+      color: var(--color-text); background: var(--color-surface);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+      padding: var(--space-4);
+    }
+    .med-event-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+    .med-event-dialog form, .med-event-dialog label { display: grid; gap: var(--space-2); }
+    .med-event-dialog input, .med-event-dialog select, .med-event-dialog textarea {
+      padding: 7px; font: inherit; color: inherit; background: var(--color-surface-2);
+      border: 1px solid var(--color-border); border-radius: var(--radius-md);
+    }
+    .med-event-dialog .event-prn { display: flex; align-items: center; }
+    .med-event-dialog [role="alert"] { color: var(--color-error); }
     .med-row .mdate { color: var(--color-text-muted); font-family: ui-monospace, monospace; font-size: var(--text-xs); }
     .med-row .mmed { font-weight: 600; }
     .med-row .maction { font-size: var(--text-xs); text-transform: uppercase; font-weight: 700; color: var(--color-primary); }
@@ -282,8 +296,8 @@
     .med-row .mnotes { font-size: var(--text-xs); color: var(--color-text-muted); font-style: italic; margin-top: 1px; }
     /* Action buttons (edit / delete) for a med row — vertically centered on the right */
     .med-row .med-actions {
-      position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-      display: flex; gap: 4px; align-items: center;
+      grid-column: 1 / -1; justify-self: end;
+      display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
     }
     .med-row .med-actions button {
       padding: 1px 6px; font-size: 10px; line-height: 1.2; border-radius: var(--radius-sm);
@@ -695,9 +709,13 @@
 <!-- Toast host -->
 <div id="regToastHost"></div>
 
-<script src="registro-i18n.js?v=20260929details"></script>
-<script src="registro-data.js?v=20260622i"></script>
-<script src="registro-paciente.js?v=20260929details"></script>
+<script src="registro-i18n.js?v=20261118ssri"></script>
+<script src="registro-data.js?v=20261118ssri"></script>
+<script type="module">
+  import * as medicationHistory from './registro-med-history.mjs';
+  window.medicationHistory = medicationHistory;
+</script>
+<script src="registro-paciente.js?v=20261118ssri"></script>
 <script>
 (() => {
   const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;

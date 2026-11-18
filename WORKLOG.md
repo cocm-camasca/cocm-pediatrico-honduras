@@ -171,3 +171,9 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: GitHub Pages deployed cfd6f35 successfully (run 44395489868). Verified the button on the signed-in production dashboard and downloaded the dated CSV using the protected test dataset. The file contained the test-data label, totals header and review section. Restored the dashboard to its original Real dataset.
 - In progress: Dr. Fowler plans to review the live website.
 - Blockers/notes: The release uses the existing Cloudflare, Apps Script and Sheet configuration.
+
+### 2026-11-18 - Codex desktop - Medication reconciliation and history
+- Completed: Recorded matching local and remote baseline e6ca2d6, Cloudflare Access redirect, existing Apps Script v2.2/version 9 source annotation and live registry headers. Audited the production medication fields, reconciled one authorized historical entry and verified the separate records and audit rows.
+- Completed: Added fixed-origin chart hyperlinks, a bilingual possible duplicate SSRI section and matching chart warning. Added sertraline to the entry dropdown and dated change/stop controls. Changes to dose or frequency through the pencil open a new history event.
+- In progress: Verify the release through the protected registry.
+- Blockers/notes: Clinic inventory, the Cloudflare administrative configuration and the deployed Apps Script version were not independently confirmed. Front-end release uses the existing schema and relay.
