@@ -265,7 +265,7 @@ function render() {
         <strong class="cond-label" style="font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;">${t('label_conditions')}:</strong>
         ${condChips || '—'}
       </div>
-      ${p.Notes ? `<div class="pat-notes-line" style="margin-top: var(--space-3); color: var(--color-text-muted);"><strong>${t('label_notes')}:</strong> ${renderMarkdownInline(p.Notes)}</div>` : ''}
+      ${p.Notes ? `<div class="pat-notes-line" style="margin-top: var(--space-3); color: var(--color-text-muted);"><strong>${t('label_notes')}:</strong> ${renderChartNote(p.Notes)}</div>` : ''}
       ${safetyActive ? `
         <div class="pat-safety-banner">
           <span>⚠ <strong>${t('safety_active')}</strong></span>
@@ -459,13 +459,12 @@ function renderCoCMTracking(p, lang) {
     const bhcmByName = p.Last_BHCM_Contact_By
       ? getUserDisplayName(p.Last_BHCM_Contact_By, PSTATE.authorizedUsers || [])
       : '';
-    const noteHtml = p.Last_BHCM_Contact_Note ? renderMarkdownInline(p.Last_BHCM_Contact_Note) : '';
     rows.push(`
       <div class="cocm-row">
         <div class="cocm-label">${t('last_contact_label')}</div>
         <div class="cocm-value">
           ${ds(p.Last_BHCM_Contact_Date)}
-          ${noteHtml ? `<div class="bhcm-note">${noteHtml}</div>` : ''}
+          ${p.Last_BHCM_Contact_Note ? `<div class="bhcm-note">${renderChartNote(p.Last_BHCM_Contact_Note)}</div>` : ''}
           ${bhcmByName ? `<div class="bhcm-by">— ${t('last_contact_by')} ${escapeHtml(bhcmByName)}</div>` : ''}
         </div>
         <div class="cocm-actions">
@@ -934,6 +933,10 @@ function bigSparkline(points, cutoffs) {
   </svg>`;
 }
 
+function renderChartNote(text, originalHtml = renderMarkdownInline(text)) {
+  return text ? `<div data-chart-note="${escapeHtml(text)}"><div data-original-note>${originalHtml}</div></div>` : '';
+}
+
 function renderVisits(lang) {
   if (!PSTATE.visits.length) return `<p style="color:var(--color-text-muted);">${t('no_visits')}</p>`;
   const en = lang === 'en';
@@ -975,7 +978,7 @@ function renderVisits(lang) {
         <div class="vdate">${v.Visit_Date}</div>
         <div class="vtype">${typeBadge}</div>
         <div class="vtool">${v.Tool||'—'}</div>
-        <div class="vnote">${v.Visit_Note ? `<div data-visit-note="${escapeHtml(v.Visit_Note)}"><div data-original-note>${noteInner}</div></div>` : ''} ${siBadge}${creatorLine}</div>
+        <div class="vnote">${renderChartNote(v.Visit_Note, noteInner)} ${siBadge}${creatorLine}</div>
         <div class="vscore">${v.Score||'—'}</div>
         <div class="vtier ${tierCls}">${tierLbl}</div>
         <div class="vedit">${editBtn}${deleteBtn}</div>
@@ -1016,7 +1019,7 @@ function renderMeds(lang) {
   const byId=new Map(issues.flatMap(i=>i.sources.map(r=>[r.Med_ID,i])));
   return PSTATE.meds.map(m => {
     const freqPart = m.Frequency ? ` <span style="color:var(--color-text-muted);font-weight:400;">· ${escapeHtml(translateMedFreq(m.Frequency))}</span>` : '';
-    const notesLine = m.Notes ? `<div class="mnotes" style="grid-column:1 / -1;">${renderMarkdownInline(m.Notes)}</div>` : '';
+    const notesLine = m.Notes ? `<div class="mnotes" style="grid-column:1 / -1;">${renderChartNote(m.Notes)}</div>` : '';
     const isExternal = String(m.Is_External || '').toUpperCase() === 'TRUE';
     const extBadge = isExternal
       ? `<span style="display:inline-block;margin-left:6px;padding:1px 7px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border-radius:var(--radius-sm);background:color-mix(in srgb,var(--color-warning) 18%,transparent);color:var(--color-warning);border:1px solid color-mix(in srgb,var(--color-warning) 40%,transparent);">${en?'EXTERNAL':'EXTERNO'}${m.External_Provider?` · ${escapeHtml(m.External_Provider)}`:''}</span>`

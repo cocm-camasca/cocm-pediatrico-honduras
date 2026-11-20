@@ -1,4 +1,4 @@
-/* Translate visit notes locally. Chart data and saved notes retain their original text. */
+/* Translate chart notes locally. Chart data and saved notes retain their original text. */
 (() => {
   const button = document.getElementById('translateVisitNotes');
   const status = document.getElementById('translateVisitStatus');
@@ -47,7 +47,7 @@
 
   async function updateNotes() {
     const current = ++revision;
-    const notes = [...chart.querySelectorAll('[data-visit-note]')];
+    const notes = [...chart.querySelectorAll('[data-chart-note]')];
     for (const note of notes) {
       note.querySelectorAll('[data-translated-note]').forEach(element => element.remove());
       note.querySelector('[data-original-note]').hidden = false;
@@ -61,7 +61,7 @@
       const [languageDetector, spanishTranslator] = await Promise.all([detector, translator]);
       for (const note of notes) {
         if (revision !== current) return;
-        const text = note.dataset.visitNote;
+        const text = note.dataset.chartNote;
         if (!translated.has(text)) {
           const [language] = await languageDetector.detect(text);
           const matches = language?.detectedLanguage?.split('-')[0] === 'es';

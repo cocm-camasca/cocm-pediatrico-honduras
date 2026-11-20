@@ -713,6 +713,8 @@
     /* Hide the safety + brigade hidden <option> entries from the status select */
     #filterStatus option[hidden] { display: none; }
     /* Note markdown rendering */
+    .pat-notes-line > [data-chart-note],
+    .pat-notes-line [data-original-note]:not([hidden]) { display: inline; }
     .vnote-text {
       display: -webkit-box;
       -webkit-box-orient: vertical;
@@ -748,8 +750,8 @@
   window.medicationHistory = medicationHistory;
   window.medReview = review;
 </script>
-<script src="registro-note-translation.js?v=20261120translateui"></script>
-<script src="registro-paciente.js?v=20261120overflow"></script>
+<script src="registro-note-translation.js?v=20261120chartnotes"></script>
+<script src="registro-paciente.js?v=20261120chartnotes"></script>
 <script>
 (() => {
   const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;
