@@ -19,7 +19,7 @@ let STATE = {
 };
 
 window.openMedicationReport = async function(overview) {
-  try { const {openReport}=await import('./registro-report-ui.mjs?v=review1'); openReport(overview); }
+  try { const {openReport}=await import('./registro-report-ui.mjs?v=20261120forms'); openReport(overview); }
   catch { showToast(t('supply_failed'),{variant:'error'}); }
 };
 
@@ -457,7 +457,7 @@ function addNpMedRow() {
         <label class="np-label">${en?'Medication':'Medicamento'} <span style="color:var(--color-error);">*</span></label>
         <select class="npMedSel" style="${inputSt}">
           <option value="">—</option>
-          ${(window.MED_FORMULARY || MED_FORMULARY).map(m => `<option value="${m}">${m}</option>`).join('')}
+          ${(window.MED_FORMULARY || MED_FORMULARY).map(m => `<option value="${m}">${m} tab</option>`).join('')}
           <option value="__other__">${en?'Other (specify)':'Otro (especificar)'}</option>
         </select>
         <input type="text" class="npMedOther" placeholder="${en?'Specify medication':'Especificar medicamento'}" style="display:none;margin-top:6px;${inputSt}"/>
@@ -496,6 +496,11 @@ function addNpMedRow() {
   // Wire up "Other" toggle
   const sel = div.querySelector('.npMedSel');
   const other = div.querySelector('.npMedOther');
+  const medAction = div.querySelector('.npMedAction');
+  const syncDose = bindMedicationFields(div.querySelector('.npMedDose'), div.querySelector('.npMedFreq'),
+    div.querySelector('.npMedNotes'), () => sel.value, () => medAction.value);
+  sel.addEventListener('change', syncDose);
+  medAction.addEventListener('change', syncDose);
   sel.addEventListener('change', () => {
     const isOther = sel.value === '__other__';
     other.style.display = isOther ? 'block' : 'none';
@@ -510,6 +515,13 @@ async function submitNewPatient(skipDupCheck=false) {
   if (btn && btn.disabled) return; // double-submit guard
   if (btn) { btn.disabled = true; btn.textContent = getLang()==='en' ? 'Saving…' : 'Guardando…'; }
   const reenable = () => { if (btn) { btn.disabled = false; btn.textContent = getLang()==='en' ? 'Save' : 'Guardar'; } };
+  for (const product of document.querySelectorAll('.npMedSel')) {
+    if (!product.value) continue;
+    const row = product.closest('.np-med-row');
+    const error = medicationEntryError(product.value, row.querySelector('.npMedAction')?.value,
+      row.querySelector('.npMedDose')?.value, row.querySelector('.npMedFreq')?.value, row.querySelector('.npMedNotes')?.value);
+    if (error) { reenable(); showToast(error, {variant:'warn'}); return; }
+  }
   const name = document.getElementById('npName').value.trim();
   if (!name) {
     reenable();
@@ -640,7 +652,7 @@ async function submitNewPatient(skipDupCheck=false) {
     }
     if (!med) continue; // skip rows with no medication selected
     const doseRaw = (mr.querySelector('.npMedDose')?.value || '').trim();
-    const doseStr = doseRaw ? `${doseRaw} mg` : '';
+    const doseStr = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(doseRaw) ? doseRaw + ' mg' : doseRaw;
     const freqSelEl = mr.querySelector('.npMedFreq');
     const isPRN = !!mr.querySelector('.npMedPRN')?.checked;
     let freq = freqSelEl?.value || '';
@@ -1185,15 +1197,15 @@ function renderStatusChips(lang) {
   if (!host) return;
   const current = document.getElementById('filterStatus').value || 'all';
   const chips = [
-    ['active',        t('status_activo'), t('status_activo_desc')],
     ['all',           t('filter_all'), t('filter_all_desc')],
-    ['safety',        t('status_safety'), t('status_safety_desc')],
-    ['brigade',       t('status_brigade'), t('status_brigade_desc')],
-    ['due_followup',  t('stat_due_followup'), t('status_due_followup_desc')],
-    ['Estable',       t('status_estable'), t('status_estable_desc')],
     ['Inactivo',      t('status_inactivo'), t('status_inactivo_desc')],
+    ['active',        t('status_activo'), t('status_activo_desc')],
+    ['Estable',       t('status_estable'), t('status_estable_desc')],
+    ['due_followup',  t('stat_due_followup'), t('status_due_followup_desc')],
     ['Transferido',   t('status_transfer'), t('status_transfer_desc')],
     ['Otro',          t('status_otro'), t('status_otro_desc')],
+    ['safety',        t('status_safety'), t('status_safety_desc')],
+    ['brigade',       t('status_brigade'), t('status_brigade_desc')],
   ];
   host.innerHTML = chips.map(([val, label, description]) => {
     const active = current === val;

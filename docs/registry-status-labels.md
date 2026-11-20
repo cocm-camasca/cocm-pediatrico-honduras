@@ -7,7 +7,7 @@ The Sheet's `Pacientes.Status` values remain the storage contract. The registry 
 | Stored value | English | Español | Current care represented |
 | --- | --- | --- | --- |
 | `Activo` | Therapy + CoCM | Terapia + CoCM | Therapy with active CoCM monitoring. |
-| `Estable` | Stable | Estable | Therapy with reduced CoCM monitoring on the 16-week cadence. |
+| `Estable` | Stable CoCM | CoCM estable | Therapy with reduced CoCM monitoring on the 16-week cadence. |
 | `Inactivo` | Therapy only | Solo terapia | Therapy without current CoCM monitoring. The patient may or may not have previously participated in CoCM. |
 | `Transferido` | Transferred | Transferido | No longer followed in this registry, including leaving Camasca or moving care elsewhere. |
 | `Otro` or other nonstandard text | Other filter; actual value on the chart | Filtro Otro; valor real en la ficha | A custom status outside the four standard categories. |
@@ -53,3 +53,12 @@ The registry search filter, New patient status field, and Edit patient status fi
 Local read-only browser checks used synthetic patient data: the mobile search picker showed all nine filter choices and explanations in both languages; selecting Therapy only kept the stored `Inactivo` value and returned only a synthetic `Inactivo` record. New patient showed four explained statuses; Edit patient preserved both a standard status and a synthetic custom status. The dark phone preview and desktop menu bounds were inspected. No production patient data was accessed or changed during these checks.
 
 The UI change was committed and pushed as `e927a61a7ac72213c6045e9f77d0033491b972f1`. GitHub Pages reported a successful build of that commit at 2026-09-29 12:02:50 UTC; the protected domain continued redirecting unauthenticated requests to Cloudflare Access. Signed-in owner review of the served page is pending.
+
+## Pre-change rollback checkpoint — 2026-09-29 status order and title
+
+- GitHub: clean local `main` matched `origin/main` at `3fee2b5d006aea413c6d32f2158ab13def194c67` before this display-only follow-up. Dr. Fowler had approved the previous live labels and closed suggestion `S-0003`.
+- Cloudflare: an unauthenticated HEAD request to the protected registry returned HTTP 302 through Access. Policy and cache settings remain unverified in the external console.
+- Apps Script: front-end source still records relay v2.2, Version 9, last confirmed 2026-05-05. The deployment console was not freshly accessible; this follow-up does not change the backend.
+- Google Sheets: a fresh read of production `Pacientes` row 1 found 36 named columns, `Status` in column K, and `Review_Flag_Note` last. No Sheet schema or patient data change is part of this follow-up; the earlier full header snapshot remains above.
+
+For this follow-up, status choices are ordered `All statuses` (filter only), `Therapy only`, `Therapy + CoCM`, `Stable CoCM`, `Due for follow-up` (filter only), `Transferred`, then `Other`, `Safety flag`, and `Brigade` where applicable. The patient status forms omit filter-only choices and keep their existing selected value; New patient still defaults to Therapy + CoCM. The Sheet continues to store `Estable` for Stable CoCM.

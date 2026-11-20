@@ -6,6 +6,7 @@
 let PSTATE = {
   patient: null,
   visits: [],
+  editedVisits: new Map(),
   meds: [],
   tools: {},
   conditions: {},
@@ -14,6 +15,27 @@ let PSTATE = {
   user: '',
   dataset: 'real',
 };
+
+const visitDrafts = new Map();
+
+function prepareVisitDraft(kind, date, note, safety, scores) {
+  const key = JSON.stringify([PSTATE.patient.Patient_ID, date, note, safety, scores]);
+  const prior = visitDrafts.get(kind);
+  if (prior?.key === key) return prior;
+  const generic = /^(routine follow-up|seguimiento de rutina|parent\/caregiver contact|contacto con padre\/cuidador)$/i.test(note);
+  const matches = PSTATE.visits.some(visit => {
+    if (visit.Visit_Date !== date) return false;
+    if (scores.length) {
+      return scores.some(score => visit.Tool === score.tool && String(visit.Score) === String(score.score)) &&
+        String(visit.Visit_Note || '').trim() === note;
+    }
+    return !generic && note && !visit.Tool && String(visit.Visit_Note || '').trim() === note;
+  });
+  if (matches && !window.confirm(t('visit_duplicate_warning'))) return null;
+  const draft = {key, id:(kind === 'score' ? 'S-' : 'V-') + crypto.randomUUID(), now:new Date().toISOString()};
+  visitDrafts.set(kind, draft);
+  return draft;
+}
 
 // ── Language toggle ─────────────────────────────────────────────
 function setLang(lang) {
@@ -35,6 +57,7 @@ function setLang(lang) {
   // Update how-to body (rich HTML)
   const hb = document.getElementById('howtoBody');
   if (hb) hb.innerHTML = t('howto_patient_body');
+  window.visitNoteTranslation?.updateControl();
   if (PSTATE.patient) render();
 }
 
@@ -152,11 +175,40 @@ async function load() {
     return;
   }
   render();
+  void loadVisitEdits(id);
   const link=new URL(location.href), targets=link.searchParams.get('correct');
   if (targets && PSTATE.patient) {
     link.searchParams.delete('correct');history.replaceState(null,'',link);
     window.correctMedicationEntry(targets);
   }
+}
+
+async function loadVisitEdits(patientId) {
+  const tab = resolveTab('Visitas');
+  const ids = new Set(PSTATE.visits.map(visit => visit.Visit_ID));
+  try {
+    const audit = await fetchTab('Auditoria', {fresh:true});
+    if (PSTATE.patient?.Patient_ID !== patientId || resolveTab('Visitas') !== tab) return;
+    for (const entry of audit) {
+      if (entry.Tab !== tab || entry.Action !== 'update' || !ids.has(entry.Row_ID)) continue;
+      if (String(entry.Timestamp) > String(PSTATE.editedVisits.get(entry.Row_ID)?.Timestamp || '')) {
+        PSTATE.editedVisits.set(entry.Row_ID, entry);
+      }
+    }
+    for (const badge of document.querySelectorAll('[data-visit-edited]')) {
+      paintVisitEditBadge(badge, PSTATE.editedVisits.get(badge.dataset.visitEdited));
+    }
+  } catch (error) {
+    console.warn('Visit edit history unavailable', error.message);
+  }
+}
+
+function paintVisitEditBadge(badge, edit) {
+  badge.hidden = !edit;
+  if (!edit) return;
+  const author = getUserDisplayName(edit.User, PSTATE.authorizedUsers);
+  badge.textContent = t('visit_edited');
+  badge.title = [edit.Timestamp, author].filter(Boolean).join(' · ');
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -507,8 +559,8 @@ if (typeof window !== 'undefined') window.saveReviewNote = saveReviewNote;
 // Promote Therapy + CoCM patient → Stable. Resets the 16-week psych-consult clock.
 async function promoteToStable() {
   const msg = getLang()==='en'
-    ? 'Promote this patient to Stable status? Psych review cadence will move to every 16 weeks, starting today.'
-    : '¿Promover este paciente a Estable? La cadencia de revisión psiq. pasa a cada 16 semanas, a partir de hoy.';
+    ? 'Promote this patient to Stable CoCM status? Psych review cadence will move to every 16 weeks, starting today.'
+    : '¿Promover este paciente a CoCM estable? La cadencia de revisión psiq. pasa a cada 16 semanas, a partir de hoy.';
   if (!confirm(msg)) return;
   await _patchPatient({
     Status: 'Estable',
@@ -631,10 +683,10 @@ function renderPrompts(p, lang) {
   if (!isStablePt && /^(activo|active)$/i.test(String(p.Status||'')) && _shouldSuggestStableLocal()) {
     prompts.push({
       text: (getLang()==='en'
-        ? 'This patient has had 3 consecutive visits in the minimal-score range, each at least 8 weeks apart. Consider promoting to Stable (monitoring shifts to every 16 weeks).'
-        : 'Este paciente tiene 3 visitas consecutivas en el rango mínimo, separadas ≥8 semanas. Considere promoverlo a Estable (monitoreo pasa a cada 16 semanas).'),
+        ? 'This patient has had 3 consecutive visits in the minimal-score range, each at least 8 weeks apart. Consider promoting to Stable CoCM (monitoring shifts to every 16 weeks).'
+        : 'Este paciente tiene 3 visitas consecutivas en el rango mínimo, separadas ≥8 semanas. Considere promoverlo a CoCM estable (monitoreo pasa a cada 16 semanas).'),
       actions: [
-        [getLang()==='en' ? 'Promote to Stable' : 'Promover a Estable', 'promoteToStable()']
+        [getLang()==='en' ? 'Promote to Stable CoCM' : 'Promover a CoCM estable', 'promoteToStable()']
       ]
     });
   }
@@ -907,8 +959,9 @@ function renderVisits(lang) {
       : `<span class="entry-type-chip type-visit">${en?'Visit':'Visita'}</span>`;
     const creator = v.Created_By || '';
     const creatorDisplay = creator ? getUserDisplayName(creator, authUsers) : '';
-    const updatedName = v.Updated_By ? getUserDisplayName(v.Updated_By, authUsers) : '';
-    const updatedBadge = v.Updated_At ? ` <span title="${en?'Edited ':'Editado '}${escapeHtml(v.Updated_At)}${updatedName ? (en?' by ':' por ')+escapeHtml(updatedName) : ''}" class="vupdated">(${en?'edited':'editado'})</span>` : '';
+    const edit = PSTATE.editedVisits.get(v.Visit_ID);
+    const editor = edit ? getUserDisplayName(edit.User, authUsers) : '';
+    const updatedBadge = ` <span data-visit-edited="${escapeHtml(v.Visit_ID)}" class="vupdated" ${edit?'':'hidden'} title="${escapeHtml([edit?.Timestamp, editor].filter(Boolean).join(' · '))}">${t('visit_edited')}</span>`;
     const creatorLine = creatorDisplay ? `<div class="vcreator">— ${escapeHtml(creatorDisplay)}${updatedBadge}</div>` : '';
     const editBtn = `<button class="vedit-btn" onclick="openEditVisitModal('${escapeHtml(v.Visit_ID)}')" title="${en?'Edit visit':'Editar visita'}">✎</button>`;
     const deleteBtn = `<button class="ghost" style="padding:4px 8px;font-size:var(--text-xs);color:var(--color-error);border-color:var(--color-error);" onclick="confirmDeleteVisit('${escapeHtml(v.Visit_ID)}')" title="${en?'Delete':'Eliminar'}">🗑</button>`;
@@ -930,7 +983,7 @@ function renderVisits(lang) {
         <div class="vdate">${v.Visit_Date}</div>
         <div class="vtype">${typeBadge}</div>
         <div class="vtool">${v.Tool||'—'}</div>
-        <div class="vnote">${noteInner} ${siBadge}${creatorLine}</div>
+        <div class="vnote">${v.Visit_Note ? `<div data-visit-note="${escapeHtml(v.Visit_Note)}"><div data-original-note>${noteInner}</div></div>` : ''} ${siBadge}${creatorLine}</div>
         <div class="vscore">${v.Score||'—'}</div>
         <div class="vtier ${tierCls}">${tierLbl}</div>
         <div class="vedit">${editBtn}${deleteBtn}</div>
@@ -944,6 +997,7 @@ function translateMedFreq(raw) {
   const en = getLang() === 'en';
   const MAP = {
     'QD-AM': en ? 'Daily, every morning' : 'Diario, cada mañana',
+    'QD-OTHER': en ? 'Daily, other timing' : 'Diario, otro horario',
     'QD-PM': en ? 'Daily, every evening' : 'Diario, cada noche',
     'QHS':   en ? 'QHS, before bed'      : 'QHS, al acostarse',
     'BID':   en ? 'BID'                  : 'BID (2 veces al día)',
@@ -954,7 +1008,7 @@ function translateMedFreq(raw) {
 
 window.correctMedicationEntry = async function(targets) {
   try {
-    const {openCorrection}=await import('./registro-correction.mjs?v=review1');
+    const {openCorrection}=await import('./registro-correction.mjs?v=20261120forms');
     await openCorrection(PSTATE.patient.Patient_ID,targets.split(','),rows=>{
       PSTATE.meds=rows.sort(window.medicationHistory.newestMedicationFirst);
       render();
@@ -1146,6 +1200,7 @@ async function setStatus(newStatus) {
 
 // ── Visit modal ────────────────────────────────────────────────
 function openVisitModal() {
+  visitDrafts.delete('visit');
   try {
   // Guard: if patient hasn't finished loading, abort silently rather than
   // throwing inside the .Tools access (which would leave the click with no
@@ -1357,8 +1412,9 @@ async function submitVisit() {
     return;
   }
 
-  const now = new Date().toISOString();
-  const visitIdBase = `V-${Date.now()}`;
+  const draft = prepareVisitDraft('visit', visitDate, visitNote, siPositive, entries);
+  if (!draft) { reenable(); return; }
+  const {now, id:visitIdBase} = draft;
 
   const createdRows = [];
   try {
@@ -1524,7 +1580,7 @@ function openMedModal() {
         <label class="np-label">${t('label_medication')} <span style="color:var(--color-error);">*</span></label>
         <select id="mMedSel" style="width:100%;padding:8px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);">
           <option value="">—</option>
-          ${(window.MED_FORMULARY || []).map(m => `<option value="${m}">${m}</option>`).join('')}
+          ${(window.MED_FORMULARY || []).map(m => `<option value="${m}">${m} tab</option>`).join('')}
           <option value="__other__">${en?'Other (specify)':'Otro (especificar)'}</option>
         </select>
         <input type="text" id="mMedOther" placeholder="${en?'Specify medication':'Especificar medicamento'}" style="display:none;margin-top:6px;width:100%;padding:8px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);"/>
@@ -1586,6 +1642,11 @@ function openMedModal() {
   // Toggle "Other" freetext visibility
   const selEl = document.getElementById('mMedSel');
   const otherEl = document.getElementById('mMedOther');
+  const actionField = document.getElementById('mAction');
+  const syncDose = bindMedicationFields(document.getElementById('mDose'), document.getElementById('mFreqSel'),
+    document.getElementById('mNotes'), () => selEl.value, () => actionField.value);
+  selEl.addEventListener('change', syncDose);
+  actionField.addEventListener('change', syncDose);
   selEl.addEventListener('change', () => {
     const isOther = selEl.value === '__other__';
     otherEl.style.display = isOther ? 'block' : 'none';
@@ -1621,7 +1682,10 @@ async function submitMed() {
 
   // Dose: numeric with implicit mg unit
   const doseRaw = (document.getElementById('mDose').value || '').trim();
-  const doseStr = doseRaw ? `${doseRaw} mg` : '';
+  const error = medicationEntryError(med, document.getElementById('mAction').value, doseRaw,
+    document.getElementById('mFreqSel').value, document.getElementById('mNotes').value);
+  if (error) { showToast(error, {variant:'warn'}); reenable(); return; }
+  const doseStr = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(doseRaw) ? doseRaw + ' mg' : doseRaw;
 
   // Frequency: preset + PRN checkbox
   const freqSelEl = document.getElementById('mFreqSel');
@@ -1748,6 +1812,7 @@ function openMedEvent(medId, mode, draft = {}) {
     fields.frequency.value = base;
     fields.prn.checked = /\bPRN$/i.test(initialFrequency);
     fields.prescriber.value = draft.Prescriber ?? m.Prescriber ?? '';
+    bindMedicationFields(fields.dose, fields.frequency, fields.notes, () => m.Medication, () => 'change');
   }
   const save = form.querySelector('[type=submit]'), cancel = form.querySelector('[type=button]');
   cancel.onclick = () => dialog.close();
@@ -1758,6 +1823,8 @@ function openMedEvent(medId, mode, draft = {}) {
     if (save.disabled) return;
     const dose = stop ? '' : fields.dose.value.trim();
     const frequency = stop ? '' : [fields.frequency.value, fields.prn.checked ? 'PRN' : ''].filter(Boolean).join(' + ');
+    const entryError = medicationEntryError(m.Medication, stop ? 'stop' : 'change', dose, frequency, fields.notes.value);
+    if (entryError) { feedback.textContent = entryError; return; }
     const doseText = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(dose) ? dose + ' mg' : dose;
     if (!stop && ((!doseText && !frequency) || (doseText === (m.Dose || '') && frequency === (m.Frequency || '')))) {
       feedback.textContent = t('med_event_same'); return;
@@ -1829,9 +1896,10 @@ function openEditMedModal(medId) {
   }
 
   const formulary = window.MED_FORMULARY || [];
-  const medIsOther = m.Medication && !formulary.includes(m.Medication);
+  const selectedFormulary = formulary.find(value => value.toLowerCase() === String(m.Medication || '').replace(/\s+(?:tablets?|tabs?)$/i, '').toLowerCase());
+  const medIsOther = m.Medication && !selectedFormulary;
   const formularyOpts = formulary.map(f =>
-    `<option value="${escapeHtml(f)}" ${f===m.Medication&&!medIsOther?'selected':''}>${escapeHtml(f)}</option>`
+    `<option value="${escapeHtml(f)}" ${f===selectedFormulary?'selected':''}>${escapeHtml(f)} tab</option>`
   ).join('');
   const freqPresets = window.MED_FREQ_PRESETS || [];
   const freqBase = (m.Frequency||'').replace(/(?:\s*\+\s*)?\bPRN$/i,'').trim();
@@ -1910,6 +1978,10 @@ function openEditMedModal(medId) {
   host.style.display = 'flex';
   const actionField = document.getElementById('emAction');
   actionField.replaceChildren(new Option(translateMedAction(m.Action), m.Action || '', true, true));
+  const medSelect = document.getElementById('emMedSel');
+  medSelect.addEventListener('change', bindMedicationFields(
+    document.getElementById('emDose'), document.getElementById('emFreqSel'), document.getElementById('emNotes'),
+    () => medSelect.value, () => actionField.value));
   host.dataset.doseInput = document.getElementById('emDose').value;
   host.dataset.freqInput = freqBase;
   host.dataset.prnInput = String(isPRN);
@@ -1938,13 +2010,16 @@ async function submitEditMed() {
   const doseRaw = (document.getElementById('emDose')?.value || '').trim();
   const host = document.getElementById('editMedModal');
   const doseChanged = doseRaw !== host.dataset.doseInput;
-  const doseStr = doseChanged ? (doseRaw ? doseRaw.replace(/\s*mg$/i,'') + ' mg' : '') : source.Dose || '';
+  const doseStr = doseChanged ? (/^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(doseRaw) ? doseRaw + ' mg' : doseRaw) : source.Dose || '';
   const freqBase = document.getElementById('emFreqSel')?.value || '';
   const isPRN    = !!document.getElementById('emPRN')?.checked;
   let freq = freqBase;
   if (isPRN) freq = freq ? freq + ' + PRN' : 'PRN';
   const freqChanged = freqBase !== host.dataset.freqInput || String(isPRN) !== host.dataset.prnInput;
   if (!freqChanged) freq = source.Frequency || '';
+  if (med === String(source.Medication || '').replace(/\s+(?:tablets?|tabs?)$/i, '')) med = source.Medication;
+  const error = medicationEntryError(med, source.Action, doseStr, freq, document.getElementById('emNotes').value);
+  if (error) { showToast(error, {variant:'warn'}); return; }
 
   const updates = {
     Date:       document.getElementById('emDate')?.value || '',
@@ -2502,6 +2577,7 @@ if (typeof window !== 'undefined') window.toggleNoteExpand = toggleNoteExpand;
 // LOG SCORE MODAL (Entry_Type='score' — no visit, no SI checkbox)
 // ════════════════════════════════════════════════════════════════
 function openScoreModal() {
+  visitDrafts.delete('score');
   const en = getLang() === 'en';
   const patientTools = (PSTATE.patient.Tools||'').split(',').map(s=>s.trim()).filter(Boolean);
   const lastUsedTool = PSTATE.visits[0]?.Tool;
@@ -2600,11 +2676,15 @@ async function submitScore() {
   const baseline = PSTATE.visits.filter(v => v.Tool===tool).slice(-1)[0]?.Baseline_Score
                  || PSTATE.visits.filter(v => v.Tool===tool)[0]?.Score
                  || score;
-  const now = new Date().toISOString();
+  const date = document.getElementById('sDate').value;
+  const note = document.getElementById('sNote').value.trim();
+  const draft = prepareVisitDraft('score', date, note, 'FALSE', [{tool, score}]);
+  if (!draft) { reenable(); return; }
+  const {now} = draft;
   const row = {
-    Visit_ID: `S-${Date.now()}`,
+    Visit_ID: draft.id,
     Patient_ID: PSTATE.patient.Patient_ID,
-    Visit_Date: document.getElementById('sDate').value,
+    Visit_Date: date,
     Therapist: PSTATE.user || PSTATE.patient.Therapist || '',
     Tool: tool,
     Score: score,
@@ -2612,7 +2692,7 @@ async function submitScore() {
     Subscale_Scores: '',
     SI_Positive: 'FALSE',
     Not_Improving_Flag: '',
-    Visit_Note: document.getElementById('sNote').value.trim(),
+    Visit_Note: note,
     Entry_Type: 'Score',
     Created_By: PSTATE.user || 'unknown',
     Created_At: now,
@@ -2883,6 +2963,7 @@ if (typeof window !== 'undefined') {
 // Entry_Type='Visit', Tool/Score blank. Required: date + note.
 // ════════════════════════════════════════════════════════════════
 function openVisitOnlyModal() {
+  visitDrafts.delete('visitOnly');
   if (!PSTATE || !PSTATE.patient) {
     if (typeof showToast === 'function') showToast(getLang()==='en' ? 'Patient still loading — try again in a moment.' : 'Paciente aún cargando — inténtalo en un momento.', { variant: 'warn' });
     return;
@@ -2959,9 +3040,11 @@ async function submitVisitOnly() {
   if (!visitNote) { showToast(en?'Note required for a no-score visit':'Se requiere una nota para visita sin puntaje', { variant:'warn' }); return; }
   const siEl = document.getElementById('voSI');
   const siPositive = siEl && siEl.type === 'checkbox' ? (siEl.checked ? 'TRUE' : 'FALSE') : 'FALSE';
-  const now = new Date().toISOString();
+  const draft = prepareVisitDraft('visitOnly', visitDate, visitNote, siPositive, []);
+  if (!draft) return;
+  const {now} = draft;
   const row = {
-    Visit_ID: `V-${Date.now()}`,
+    Visit_ID: draft.id,
     Patient_ID: PSTATE.patient.Patient_ID,
     Visit_Date: visitDate,
     Therapist: PSTATE.user || PSTATE.patient.Therapist || '',
@@ -3160,10 +3243,12 @@ async function submitEditVisit() {
   try {
     await updateRow('Visitas', visitId, updates);
     Object.assign(v, updates);
+    PSTATE.editedVisits.set(visitId, {Timestamp: now, User: PSTATE.user});
     showToast(t('saved'), { variant:'success', undo: async () => {
       await updateRow('Visitas', visitId, prev);
       Object.assign(v, prev);
       render();
+      void loadVisitEdits(PSTATE.patient.Patient_ID);
     }});
     closeEditVisitModal();
     render();

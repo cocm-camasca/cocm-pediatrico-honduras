@@ -1,6 +1,6 @@
 // Loaded only when the dashboard's supply button is clicked.
-import {day, loggedDay, hondurasDate, hasDuplicateSsri} from './registro-med-history.mjs?v=review1';
-import {analyzeMedications, groupPatients, reviewReason, chartUrl} from './registro-med-review.mjs?v=review1';
+import {day, loggedDay, hondurasDate, hasDuplicateSsri} from './registro-med-history.mjs?v=20261120forms';
+import {analyzeMedications, groupPatients, reviewReason, chartUrl} from './registro-med-review.mjs?v=20261120forms';
 
 function priorYear(date) {
   const year = Number(date.slice(0, 4)) - 1;

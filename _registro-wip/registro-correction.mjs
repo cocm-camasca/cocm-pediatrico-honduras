@@ -1,5 +1,5 @@
-import {analyzeMedications,reviewReason,historySnapshot} from './registro-med-review.mjs?v=review1';
-import {product,normalize,hondurasDate} from './registro-med-history.mjs?v=review1';
+import {analyzeMedications,reviewReason,historySnapshot} from './registro-med-review.mjs?v=20261120forms';
+import {product,normalize,hondurasDate} from './registro-med-history.mjs?v=20261120forms';
 
 const splitNames = raw => String(raw || '').split(/\s+(?:and|y)\s+|[,;](?!\d)|\s*[&+]\s*/i).map(v=>v.trim()).filter(Boolean);
 
@@ -72,7 +72,7 @@ export async function openCorrection(id, targets, refresh) {
       }
       const [status]=select('med_resolution',[['',t('med_select')],['active',t('med_active')],['off',t('med_off')],['unclear',t('med_unclear')]]);
       status.required=true;
-      const [stock,stockLabel]=select('med_formulary',[['',t('med_other')],...MED_FORMULARY.map(v=>[v,v])]);
+      const [stock,stockLabel]=select('med_formulary',[['',t('med_other')],...MED_FORMULARY.map(v=>[v,v+' tab'])]);
       const [name]=input('med_part_name');name.required=true;name.maxLength=500;
       const [strength,strengthLabel]=input('med_part_strength','number');strength.step='any';strength.min='0.000001';
       const [dose,doseLabel]=input('med_part_dose');dose.maxLength=60;
@@ -98,11 +98,15 @@ export async function openCorrection(id, targets, refresh) {
         const active=status.value==='active',off=status.value==='off';
         stockLabel.hidden=!active;strengthLabel.hidden=!active;doseLabel.hidden=off;freqLabel.hidden=off;prnLabel.hidden=off||freq.value==='PRN';stopLabel.hidden=!off;
         name.readOnly=active && !!stock.value;strength.readOnly=name.readOnly;
-        strength.required=active;freq.required=active;dose.required=active && freq.value!=='PRN';
+        strength.required=active;freq.required=active;
         strength.disabled=!active;stopDate.disabled=!off;dose.disabled=off;freq.disabled=off;prn.disabled=prnLabel.hidden;
       }
-      status.onchange=freq.onchange=sync;sync();
-      const card={box,legend,part:()=>({status:status.value,name:name.value.trim(),strength:status.value==='active'?strength.value:'',
+      const syncDose=bindMedicationFields(dose,freq,notes,()=>stock.value,
+        ()=>status.value==='active'?'start':status.value==='off'?'stop':'unresolved');
+      stock.addEventListener('change',syncDose);
+      status.onchange=()=>{sync();syncDose();};
+      freq.onchange=sync;sync();
+      const card={box,legend,part:()=>({status:status.value,stock:stock.value,name:name.value.trim(),strength:status.value==='active'?strength.value:'',
         dose:dose.disabled?'':dose.value.trim(),frequency:freq.disabled?'':freq.value+(!prn.disabled && prn.checked?(freq.value?' + PRN':'PRN'):''),
         stopDate:stopDate.disabled?'':stopDate.value,notes:notes.value.trim()})};
       parts.push(card);
@@ -117,8 +121,11 @@ export async function openCorrection(id, targets, refresh) {
     form.onsubmit=async e=>{
       e.preventDefault();if(save.disabled)return;
       const values=parts.map(p=>p.part());
+      if(values.some(p=>p.status==='active' && /^QD-OTHER(?: \+ PRN)?$/.test(p.frequency) && !p.notes)){
+        error.textContent=t('med_other_timing_notes');return;
+      }
       if(values.some(p=>p.status==='active' && (!product(p.name+' '+p.strength+' mg tablets')?.strength ||
-        (p.frequency!=='PRN' && !(/^\d+(\.\d+)?$/.test(p.dose)&&Number(p.dose)>0))))){
+        (p.stock && !p.dose)))){
         error.textContent=t('med_edit_invalid');return;
       }
       if(new Set(values.map(p=>normalize(product(p.name)?.name||p.name))).size!==values.length){

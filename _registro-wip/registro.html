@@ -639,15 +639,15 @@
         <div class="filter-group">
           <label id="statusFilterLabel" data-es="Estado" data-en="Status">Estado</label>
           <select id="filterStatus" onchange="renderAll()">
-            <option value="active" data-i18n-label="status_activo" data-i18n-tip="status_activo_desc">Terapia + CoCM</option>
             <option value="all" selected data-i18n-label="filter_all" data-i18n-tip="filter_all_desc">Todos los estados</option>
-            <option value="safety" data-i18n-label="status_safety" data-i18n-tip="status_safety_desc">⚠ Con bandera de seguridad</option>
-            <option value="brigade" data-i18n-label="status_brigade" data-i18n-tip="status_brigade_desc">🚩 Brigada</option>
-            <option value="due_followup" data-i18n-label="status_due_followup" data-i18n-tip="status_due_followup_desc">Por seguimiento</option>
-            <option value="Estable" data-i18n-label="status_estable" data-i18n-tip="status_estable_desc">Estable</option>
             <option value="Inactivo" data-i18n-label="status_inactivo" data-i18n-tip="status_inactivo_desc">Solo terapia</option>
+            <option value="active" data-i18n-label="status_activo" data-i18n-tip="status_activo_desc">Terapia + CoCM</option>
+            <option value="Estable" data-i18n-label="status_estable" data-i18n-tip="status_estable_desc">CoCM estable</option>
+            <option value="due_followup" data-i18n-label="status_due_followup" data-i18n-tip="status_due_followup_desc">Por seguimiento</option>
             <option value="Transferido" data-i18n-label="status_transfer" data-i18n-tip="status_transfer_desc">Transferido</option>
             <option value="Otro" data-i18n-label="status_otro" data-i18n-tip="status_otro_desc">Otro</option>
+            <option value="safety" data-i18n-label="status_safety" data-i18n-tip="status_safety_desc">⚠ Con bandera de seguridad</option>
+            <option value="brigade" data-i18n-label="status_brigade" data-i18n-tip="status_brigade_desc">🚩 Brigada</option>
           </select>
         </div>
 
@@ -863,12 +863,12 @@
 
 <link rel="stylesheet" href="registro-med-dialog.css?v=review1">
 <script type="module">
-  import * as review from './registro-med-review.mjs?v=review1';
+  import * as review from './registro-med-review.mjs?v=20261120forms';
   window.medReview = review;
 </script>
-<script src="registro-i18n.js?v=20261118review"></script>
-<script src="registro-data.js?v=20261118ssri"></script>
-<script src="registro-app.js?v=20261118review"></script>
+<script src="registro-i18n.js?v=20261120forms"></script>
+<script src="registro-data.js?v=20261120forms"></script>
+<script src="registro-app.js?v=20261120forms"></script>
 
 </body>
 </html>

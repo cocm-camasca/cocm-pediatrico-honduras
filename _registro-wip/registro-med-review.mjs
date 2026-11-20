@@ -1,4 +1,4 @@
-import {normalize, day, loggedDay, action, product, hondurasDate, newestMedicationFirst} from './registro-med-history.mjs?v=review1';
+import {normalize, day, loggedDay, action, product, hondurasDate, newestMedicationFirst} from './registro-med-history.mjs?v=20261120forms';
 
 function frequency(raw) {
   const text = normalize(raw);
@@ -7,12 +7,13 @@ function frequency(raw) {
   const base = text.replace(marker, '').replace(/\s*\+\s*$/, '').trim();
   if (!base) return {times: prn ? 0 : null, prn};
   const patterns = [
+    /^qd-other$/,
     /^(qd(?:-am|-pm)?|qhs(?:, (?:before bed|al acostarse))?|daily(?:, every (?:morning|evening))?|once daily|once a day|nightly|diari[oa](?:, cada (?:manana|noche))?|cada (?:dia|manana|noche)|1 vez al dia|una vez al dia)$/,
     /^(bid(?: \(2 veces al dia\))?|twice daily|2 veces al dia|dos veces al dia)$/,
     /^(tid(?: \(3 veces al dia\))?|three times daily|3 veces al dia|tres veces al dia)$/
   ];
   const index = patterns.findIndex(pattern => pattern.test(base));
-  return {times: index < 0 ? null : index + 1, prn};
+  return {times: index < 0 ? null : Math.max(1, index), prn};
 }
 
 function regimen(events, today) {

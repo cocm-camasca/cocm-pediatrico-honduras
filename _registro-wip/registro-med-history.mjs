@@ -83,7 +83,7 @@ for (const family of [
   ['Fluoxetine', 'fluoxetina', 'prozac'], ['Hydroxyzine', 'hidroxizina', 'hydrozicine', 'atarax'],
   ['Gabapentin', 'gabapentina'], ['Guanfacine', 'guanfacina'], ['Diazepam'],
   ['Levetiracetam', 'keppra', 'levetiracetam (keppra)'], ['Quetiapine', 'quetiapina', 'seroquel', 'quetiapine (seroquel)'],
-  ['Melatonin', 'melatonina'], ['Sertraline', 'sertralina', 'zoloft', 'sertraline (zoloft)'],
+  ['Melatonin', 'melatonina'], ['Magnesium glycinate', 'glicinato de magnesio'], ['Sertraline', 'sertralina', 'zoloft', 'sertraline (zoloft)'],
   ['Risperidone', 'risperidona', 'risperdal'], ['Clonazepam']
 ]) {
   for (const name of family) aliases.set(normalize(name), family[0]);

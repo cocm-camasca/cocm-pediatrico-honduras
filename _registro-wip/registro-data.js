@@ -1170,13 +1170,72 @@ const MED_FORMULARY = [
   'Diazepam 5 mg',
   'Quetiapine (Seroquel) 50 mg',
   'Melatonin 1 mg',
+  'Magnesium glycinate 200 mg',
 ];
 const MED_FREQ_PRESETS = [
   { v:'QD-AM',  en:'Daily, every morning',  es:'Diario, cada mañana' },
   { v:'QD-PM',  en:'Daily, every evening',  es:'Diario, cada noche' },
+  { v:'QD-OTHER', en:'Daily, other timing', es:'Diario, otro horario' },
   { v:'QHS',    en:'QHS, before bed',       es:'QHS, al acostarse' },
   { v:'BID',    en:'BID',                   es:'BID (2 veces al día)' },
   { v:'TID',    en:'TID',                   es:'TID (3 veces al día)' },
 ];
 if (typeof window !== 'undefined') window.MED_FORMULARY = MED_FORMULARY;
 if (typeof window !== 'undefined') window.MED_FREQ_PRESETS = MED_FREQ_PRESETS;
+
+function formularyStrength(medication) {
+  const key = String(medication || '').replace(/\s+(?:tablets?|tabs?)$/i, '').toLowerCase();
+  const item = MED_FORMULARY.find(value => value.toLowerCase() === key);
+  return item ? Number(item.match(/(\d+(?:\.\d+)?) mg$/)[1]) : 0;
+}
+
+function medicationEntryError(medication, action, dose, frequency, notes) {
+  if (/^(?:stop|hold|confirmed_off)$/i.test(action)) return '';
+  if (formularyStrength(medication) && !String(dose || '').trim()) return t('med_formulary_dose_required');
+  if (/^QD-OTHER(?: \+ PRN)?$/i.test(frequency) && !String(notes || '').trim()) return t('med_other_timing_notes');
+  return '';
+}
+
+function bindMedicationFields(dose, frequency, notes, medication, action) {
+  dose.type = 'text';
+  dose.inputMode = 'decimal';
+  const controls = document.createElement('span');
+  controls.style.cssText = 'display:inline-flex;gap:4px;margin-top:4px';
+  dose.parentElement.after(controls);
+  const step = direction => {
+    const increment = formularyStrength(medication()) / 2;
+    if (!increment) return;
+    const current = Number(dose.value.trim().replace(',', '.'));
+    if (!Number.isFinite(current)) return;
+    dose.value = String(Math.max(increment, Number((current + direction * increment).toFixed(8))));
+    dose.dispatchEvent(new Event('input', {bubbles:true}));
+  };
+  for (const [direction, label] of [[-1, 'med_half_less'], [1, 'med_half_more']]) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'ghost';
+    button.textContent = direction < 0 ? '↓' : '↑';
+    button.setAttribute('aria-label', t(label));
+    button.onclick = () => step(direction);
+    controls.append(button);
+  }
+  dose.addEventListener('keydown', event => {
+    if (!controls.hidden && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault();
+      step(event.key === 'ArrowUp' ? 1 : -1);
+    }
+  });
+  const originalPlaceholder = notes.placeholder;
+  const sync = () => {
+    const active = !/^(?:stop|hold|confirmed_off|unresolved)$/i.test(action());
+    const otherTiming = active && frequency.value === 'QD-OTHER';
+    controls.hidden = !active || !formularyStrength(medication());
+    controls.style.display = controls.hidden ? 'none' : 'inline-flex';
+    dose.required = active && !!formularyStrength(medication());
+    notes.required = otherTiming;
+    notes.placeholder = otherTiming ? t('med_other_timing_notes') : originalPlaceholder;
+  };
+  frequency.addEventListener('change', sync);
+  sync();
+  return sync;
+}

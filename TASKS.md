@@ -1,4 +1,4 @@
-﻿# Tasks - cocm-pediatrico-honduras
+# Tasks - cocm-pediatrico-honduras
 
 ## Status Key
 - [ ] Not started
@@ -7,7 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
-- [~] Medication corrections and both report formats are published. Owner Google relay authorization and end-to-end protected-host verification are pending.
+- [~] Live medication correction and bilingual report verification complete. Await clinic confirmation of stocked strengths, dosage forms, tablet splitting and outside supply before revising the entry dialog and review rules.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
