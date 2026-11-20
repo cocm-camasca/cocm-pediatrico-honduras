@@ -25,6 +25,17 @@
     .topbar-title { font-size: 16px !important; }
     .topbar-subtitle { font-size: 12px !important; }
     .lang-btn { font-size: 11px !important; padding: 3px 10px !important; }
+    .note-translation-toggle {
+      border: 1px solid var(--color-border);
+      background: var(--color-surface-offset);
+      color: var(--color-text);
+      white-space: nowrap;
+    }
+    .note-translation-toggle:hover { border-color: var(--color-primary); }
+    .note-translation-toggle[aria-pressed="true"] {
+      background: var(--color-primary);
+      color: white;
+    }
     @media (max-width: 768px) {
       .topbar { flex-wrap: wrap; gap: 6px; padding: 10px 14px !important; overflow: visible; }
       .topbar-actions { gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
@@ -457,16 +468,16 @@
           <button type="button" onclick="adjustTextSize(-1)" aria-label="Decrease text size" title="Decrease text size (A−)" style="background:transparent;border:none;padding:3px 8px;font-size:11px;font-weight:600;color:var(--color-text-muted);cursor:pointer;border-radius:var(--radius-full);">A−</button>
           <button type="button" onclick="adjustTextSize(1)" aria-label="Increase text size" title="Increase text size (A+)" style="background:transparent;border:none;padding:3px 8px;font-size:13px;font-weight:700;color:var(--color-text-muted);cursor:pointer;border-radius:var(--radius-full);">A+</button>
         </div>
-        <div class="lang-toggle">
-          <button class="lang-btn active" id="btnES" onclick="setLang('es')">Español</button>
-          <button class="lang-btn" id="btnEN" onclick="setLang('en')">English</button>
-        </div>
         <button class="theme-toggle" data-theme-toggle aria-label="Cambiar tema">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <button type="button" class="ghost" id="translateVisitNotes" aria-pressed="false" hidden></button>
+        <div class="lang-toggle">
+          <button class="lang-btn active" id="btnES" onclick="setLang('es')">Español</button>
+          <button class="lang-btn" id="btnEN" onclick="setLang('en')">English</button>
+        </div>
+        <button type="button" class="lang-btn note-translation-toggle" id="translateVisitNotes" aria-pressed="false" hidden></button>
         <span id="translateVisitStatus" role="status"></span>
       </div>
     </div>
@@ -729,7 +740,7 @@
 <div id="regToastHost"></div>
 
 <link rel="stylesheet" href="registro-med-dialog.css?v=review1">
-<script src="registro-i18n.js?v=20261120overflow"></script>
+<script src="registro-i18n.js?v=20261120translateui"></script>
 <script src="registro-data.js?v=20261120forms"></script>
 <script type="module">
   import * as medicationHistory from './registro-med-history.mjs?v=20261120forms';
@@ -737,7 +748,7 @@
   window.medicationHistory = medicationHistory;
   window.medReview = review;
 </script>
-<script src="registro-note-translation.js?v=20261120notes"></script>
+<script src="registro-note-translation.js?v=20261120translateui"></script>
 <script src="registro-paciente.js?v=20261120overflow"></script>
 <script>
 (() => {

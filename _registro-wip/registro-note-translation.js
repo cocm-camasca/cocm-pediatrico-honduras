@@ -6,21 +6,25 @@
 
   const preference = 'coCMCamasca.translateVisitNotes';
   const chart = document.getElementById('patBody');
-  const translators = new Map();
   const translated = new Map();
   let detector;
+  let translator;
   let enabled = localStorage.getItem(preference) === 'true';
   let revision = 0;
 
   function updateControl() {
-    button.hidden = false;
+    button.hidden = getLang() !== 'en';
+    if (button.hidden) {
+      status.textContent = '';
+      return;
+    }
     button.textContent = t('notes_translate');
     button.title = t('notes_translate_scope');
     button.setAttribute('aria-description', t('notes_translate_scope'));
     button.setAttribute('aria-pressed', String(enabled));
   }
 
-  function displayTranslation(note, translation, source) {
+  function displayTranslation(note, translation) {
     const original = note.querySelector('[data-original-note]');
     const output = document.createElement('div');
     output.dataset.translatedNote = '';
@@ -36,7 +40,7 @@
       original.hidden = !output.hidden;
       toggle.textContent = t(output.hidden ? 'notes_show_translation' : 'notes_show_original');
     };
-    controls.append(t(source === 'es' ? 'notes_from_spanish' : 'notes_from_english'), ' · ', toggle);
+    controls.append(t('notes_from_spanish'), ' · ', toggle);
     original.hidden = true;
     note.append(output, controls);
   }
@@ -49,33 +53,27 @@
       note.querySelector('[data-original-note]').hidden = false;
     }
     status.textContent = '';
-    if (!enabled || !notes.length) return;
-
-    const targetLanguage = getLang() === 'en' ? 'en' : 'es';
-    const sourceLanguage = targetLanguage === 'en' ? 'es' : 'en';
+    if (!enabled || getLang() !== 'en' || !notes.length) return;
     status.textContent = t('notes_translate_wait');
     try {
       detector ||= LanguageDetector.create();
-      if (!translators.has(targetLanguage)) {
-        translators.set(targetLanguage, Translator.create({sourceLanguage, targetLanguage}));
-      }
-      const [languageDetector, translator] = await Promise.all([detector, translators.get(targetLanguage)]);
+      translator ||= Translator.create({sourceLanguage: 'es', targetLanguage: 'en'});
+      const [languageDetector, spanishTranslator] = await Promise.all([detector, translator]);
       for (const note of notes) {
         if (revision !== current) return;
         const text = note.dataset.visitNote;
-        const key = targetLanguage + ':' + text;
-        if (!translated.has(key)) {
+        if (!translated.has(text)) {
           const [language] = await languageDetector.detect(text);
-          const matches = language?.detectedLanguage?.split('-')[0] === sourceLanguage;
-          translated.set(key, matches ? await translator.translate(text) : null);
+          const matches = language?.detectedLanguage?.split('-')[0] === 'es';
+          translated.set(text, matches ? await spanishTranslator.translate(text) : null);
         }
-        const result = translated.get(key);
-        if (revision === current && note.isConnected && result) displayTranslation(note, result, sourceLanguage);
+        const result = translated.get(text);
+        if (revision === current && note.isConnected && result) displayTranslation(note, result);
       }
       if (revision === current) status.textContent = '';
     } catch {
       detector = undefined;
-      translators.delete(targetLanguage);
+      translator = undefined;
       if (revision === current) {
         enabled = false;
         updateControl();
