@@ -992,7 +992,7 @@ function translateMedFreq(raw) {
   const en = getLang() === 'en';
   const MAP = {
     'QD-AM': en ? 'Daily, every morning' : 'Diario, cada mañana',
-    'QD-OTHER': en ? 'Daily, other timing' : 'Diario, otro horario',
+    'QD-OTHER': en ? 'Daily' : 'Diario',
     'QD-PM': en ? 'Daily, every evening' : 'Diario, cada noche',
     'QHS':   en ? 'QHS, before bed'      : 'QHS, al acostarse',
     'BID':   en ? 'BID'                  : 'BID (2 veces al día)',
@@ -1003,7 +1003,7 @@ function translateMedFreq(raw) {
 
 window.correctMedicationEntry = async function(targets) {
   try {
-    const {openCorrection}=await import('./registro-correction.mjs?v=20261120forms');
+    const {openCorrection}=await import('./registro-correction.mjs?v=20261120medui');
     await openCorrection(PSTATE.patient.Patient_ID,targets.split(','),rows=>{
       PSTATE.meds=rows.sort(window.medicationHistory.newestMedicationFirst);
       render();
@@ -1037,7 +1037,8 @@ function renderMeds(lang) {
     const issue=byId.get(m.Med_ID), archived=String(m.Action).startsWith('CORRECTED:');
     const medActionBtns = archived ? '' : `<div class="med-actions">
       ${issue ? `<button type="button" class="ghost" data-id="${escapeHtml(m.Med_ID)}" title="${escapeHtml(window.medReview.reviewReason([issue],t))}" onclick="correctMedicationEntry(this.dataset.id)">💊 ${t('med_correct')}</button>` : ''}
-      ${current.has(m.Med_ID) ? `<button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'change')">${t('med_event_change')}</button>
+      ${current.has(m.Med_ID) ? `<button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedModal(this.dataset.medId)">${t('med_continue')}</button>
+        <button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'change')">${t('med_event_change')}</button>
         <button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'stop')">${t('med_event_stop')}</button>` : ''}
       <button type="button" class="ghost" onclick="openEditMedModal('${escapeHtml(m.Med_ID)}')" title="${en?'Edit':'Editar'}" aria-label="${en?'Edit':'Editar'}">✏️</button>
       <button type="button" class="ghost" style="color:var(--color-error);border-color:color-mix(in srgb, var(--color-error) 35%, transparent);" onclick="confirmDeleteMed('${escapeHtml(m.Med_ID)}')" title="${en?'Delete':'Eliminar'}" aria-label="${en?'Delete':'Eliminar'}">🗑</button>
@@ -1513,7 +1514,7 @@ if (typeof window !== 'undefined') {
 
 // ── Med modal ──────────────────────────────────────────────────
 
-function openMedModal() {
+function openMedModal(continueId) {
   const en = getLang()==='en';
   const patientConds = (PSTATE.patient.Conditions||'').split(',').map(s=>s.trim()).filter(Boolean);
   const standardReasonDefs = [
@@ -1638,8 +1639,32 @@ function openMedModal() {
   const selEl = document.getElementById('mMedSel');
   const otherEl = document.getElementById('mMedOther');
   const actionField = document.getElementById('mAction');
-  const syncDose = bindMedicationFields(document.getElementById('mDose'), document.getElementById('mFreqSel'),
-    document.getElementById('mNotes'), () => selEl.value, () => actionField.value);
+  const doseField = document.getElementById('mDose');
+  const frequencyField = document.getElementById('mFreqSel');
+  const prn = document.getElementById('mPRN');
+  const external = document.getElementById('medIsExternal');
+  const source = PSTATE.meds.find(m => m.Med_ID === continueId);
+  if (source) {
+    const product = source.Medication.replace(/\s+(?:tablets?|tabs?)$/i, '');
+    selEl.value = MED_FORMULARY.includes(product) ? product : '__other__';
+    otherEl.value = source.Medication;
+    otherEl.style.display = selEl.value === '__other__' ? 'block' : 'none';
+    actionField.value = 'CONTINUE';
+    doseField.value = String(source.Dose || '').replace(/\s*mg$/i, '');
+    const instruction = String(source.Frequency || '');
+    const baseFrequency = instruction.replace(/(?:\s*\+\s*)?\bPRN$/i, '').trim();
+    const preset = MED_FREQ_PRESETS.find(p => [p.v,p.en,p.es].includes(baseFrequency));
+    if (baseFrequency && !preset) frequencyField.add(new Option(baseFrequency, baseFrequency));
+    frequencyField.value = preset?.v || baseFrequency;
+    prn.checked = /\bPRN$/i.test(instruction);
+    external.checked = String(source.Is_External).toUpperCase() === 'TRUE';
+    document.getElementById('medExternalProvider').value = source.External_Provider || '';
+    toggleExternalProvider(external.checked);
+  }
+  const syncDose = bindMedicationFields(doseField, frequencyField,
+    document.getElementById('mNotes'), () => selEl.value, () => actionField.value,
+    {prn, external: () => external.checked});
+  external.addEventListener('change', syncDose);
   selEl.addEventListener('change', syncDose);
   actionField.addEventListener('change', syncDose);
   selEl.addEventListener('change', () => {
@@ -1677,9 +1702,6 @@ async function submitMed() {
 
   // Dose: numeric with implicit mg unit
   const doseRaw = (document.getElementById('mDose').value || '').trim();
-  const error = medicationEntryError(med, document.getElementById('mAction').value, doseRaw,
-    document.getElementById('mFreqSel').value, document.getElementById('mNotes').value);
-  if (error) { showToast(error, {variant:'warn'}); reenable(); return; }
   const doseStr = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(doseRaw) ? doseRaw + ' mg' : doseRaw;
 
   // Frequency: preset + PRN checkbox
@@ -1688,6 +1710,12 @@ async function submitMed() {
   let freq = freqSelEl?.value || '';
   // freq keeps raw code (QD-AM, QD-PM, QHS, BID, TID, PRN); translated at render time
   if (isPRN) freq = (freq ? freq + ' + PRN' : 'PRN');
+  const action = document.getElementById('mAction').value;
+  const error = medicationEntryError(action, doseRaw, freq, document.getElementById('mNotes').value,
+    document.getElementById('medIsExternal').checked);
+  if (error) { showToast(error, {variant:'warn'}); reenable(); return; }
+  if (action === 'START' && hasActiveMedication(med, document.getElementById('mDate').value) &&
+      !window.confirm(t('med_already_active'))) { reenable(); return; }
 
   // Reason: checkboxes + freetext
   const reasonCbs = [...document.querySelectorAll('.mReasonCond:checked')].map(c => c.value);
@@ -1725,6 +1753,14 @@ async function submitMed() {
   PSTATE.meds.unshift(row);
   closeMedModal();
   render();
+}
+
+function hasActiveMedication(medication, date, excludeId) {
+  const history = window.medicationHistory;
+  const name = history.product(medication)?.name;
+  const entries = PSTATE.meds.filter(row => row.Med_ID !== excludeId);
+  const activeIds = history.currentMedIds(entries, date || undefined);
+  return !!name && entries.some(row => activeIds.has(row.Med_ID) && history.product(row.Medication)?.name === name);
 }
 if (typeof window !== 'undefined') {
   window.openMedModal  = openMedModal;
@@ -1768,6 +1804,7 @@ function openMedEvent(medId, mode, draft = {}) {
     return;
   }
   const stop = mode === 'stop';
+  const external = String(m.Is_External).toUpperCase() === 'TRUE';
   const today = window.medicationHistory.hondurasDate.format(new Date());
   const dialog = document.createElement('dialog');
   dialog.className = 'med-event-dialog';
@@ -1792,7 +1829,7 @@ function openMedEvent(medId, mode, draft = {}) {
     <label>${t('label_prescriber')}<input name="prescriber"></label>`}
     <label>${t('med_event_notes')}<textarea name="notes" rows="2"></textarea></label>
     <span role="alert"></span>
-    <div class="modal-footer"><button type="button" class="ghost">${t('med_event_cancel')}</button>
+    <div class="modal-footer"><button type="button" class="ghost" data-cancel-med-event>${t('med_event_cancel')}</button>
     <button type="submit" class="primary">${t(stop ? 'med_event_stop_ok' : 'med_event_append')}</button></div>
     </form>`;
   const form = dialog.querySelector('form'), fields = form.elements;
@@ -1807,9 +1844,10 @@ function openMedEvent(medId, mode, draft = {}) {
     fields.frequency.value = base;
     fields.prn.checked = /\bPRN$/i.test(initialFrequency);
     fields.prescriber.value = draft.Prescriber ?? m.Prescriber ?? '';
-    bindMedicationFields(fields.dose, fields.frequency, fields.notes, () => m.Medication, () => 'change');
+    bindMedicationFields(fields.dose, fields.frequency, fields.notes, () => m.Medication, () => 'change',
+      {prn:fields.prn, external:() => external});
   }
-  const save = form.querySelector('[type=submit]'), cancel = form.querySelector('[type=button]');
+  const save = form.querySelector('[type=submit]'), cancel = form.querySelector('[data-cancel-med-event]');
   cancel.onclick = () => dialog.close();
   dialog.oncancel = e => { if (save.disabled) e.preventDefault(); };
   dialog.onclose = () => dialog.remove();
@@ -1818,7 +1856,7 @@ function openMedEvent(medId, mode, draft = {}) {
     if (save.disabled) return;
     const dose = stop ? '' : fields.dose.value.trim();
     const frequency = stop ? '' : [fields.frequency.value, fields.prn.checked ? 'PRN' : ''].filter(Boolean).join(' + ');
-    const entryError = medicationEntryError(m.Medication, stop ? 'stop' : 'change', dose, frequency, fields.notes.value);
+    const entryError = medicationEntryError(stop ? 'stop' : 'change', dose, frequency, fields.notes.value, external);
     if (entryError) { feedback.textContent = entryError; return; }
     const doseText = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(dose) ? dose + ' mg' : dose;
     if (!stop && ((!doseText && !frequency) || (doseText === (m.Dose || '') && frequency === (m.Frequency || '')))) {
@@ -1915,7 +1953,7 @@ function openEditMedModal(medId) {
       </div>
       <div>
         <label class="np-label">${t('label_action')}</label>
-        <select id="emAction" disabled style="${inputSt}">
+        <select id="emAction" style="${inputSt}">
           <option value="START"    ${m.Action==='START'   ?'selected':''}>${t('med_start')}</option>
           <option value="INCREASE" ${m.Action==='INCREASE'?'selected':''}>${t('med_increase')}</option>
           <option value="DECREASE" ${m.Action==='DECREASE'?'selected':''}>${t('med_decrease')}</option>
@@ -1972,11 +2010,17 @@ function openEditMedModal(medId) {
   `;
   host.style.display = 'flex';
   const actionField = document.getElementById('emAction');
-  actionField.replaceChildren(new Option(translateMedAction(m.Action), m.Action || '', true, true));
+  const actionValue = [...actionField.options].find(option => option.value === String(m.Action || '').toUpperCase())?.value;
+  if (!actionValue) actionField.add(new Option(translateMedAction(m.Action), m.Action || '', true, true));
+  actionField.value = actionValue || m.Action || '';
   const medSelect = document.getElementById('emMedSel');
-  medSelect.addEventListener('change', bindMedicationFields(
+  const syncDose = bindMedicationFields(
     document.getElementById('emDose'), document.getElementById('emFreqSel'), document.getElementById('emNotes'),
-    () => medSelect.value, () => actionField.value));
+    () => medSelect.value, () => actionField.value,
+    {prn:document.getElementById('emPRN'), external:() => String(m.Is_External).toUpperCase() === 'TRUE'});
+  medSelect.addEventListener('change', syncDose);
+  actionField.addEventListener('change', syncDose);
+  host.dataset.actionInput = actionField.value;
   host.dataset.doseInput = document.getElementById('emDose').value;
   host.dataset.freqInput = freqBase;
   host.dataset.prnInput = String(isPRN);
@@ -2013,12 +2057,15 @@ async function submitEditMed() {
   const freqChanged = freqBase !== host.dataset.freqInput || String(isPRN) !== host.dataset.prnInput;
   if (!freqChanged) freq = source.Frequency || '';
   if (med === String(source.Medication || '').replace(/\s+(?:tablets?|tabs?)$/i, '')) med = source.Medication;
-  const error = medicationEntryError(med, source.Action, doseStr, freq, document.getElementById('emNotes').value);
+  const action = document.getElementById('emAction').value;
+  const actionChanged = action !== host.dataset.actionInput;
+  const error = medicationEntryError(action, doseStr, freq, document.getElementById('emNotes').value,
+    String(source.Is_External).toUpperCase() === 'TRUE');
   if (error) { showToast(error, {variant:'warn'}); return; }
 
   const updates = {
     Date:       document.getElementById('emDate')?.value || '',
-    Action:     document.getElementById('emAction')?.value || '',
+    Action:     actionChanged ? action : source.Action,
     Medication: med,
     Dose:       doseStr,
     Frequency:  freq,
@@ -2030,7 +2077,9 @@ async function submitEditMed() {
     Updated_At: new Date().toISOString(),
   };
 
-  if (doseChanged || freqChanged) {
+  if (actionChanged && action === 'START' && hasActiveMedication(med, updates.Date, medId) &&
+      !window.confirm(t('med_already_active'))) return;
+  if ((doseChanged || freqChanged) && !actionChanged) {
     if (!window.medicationHistory.currentMedIds(PSTATE.meds).has(medId)) {
       showToast(t('med_event_latest'), {variant:'warn'}); return;
     }

@@ -64,7 +64,7 @@ function correctMedication_(tab, body, actor) {
         (active && (!/^[a-zA-ZÀ-ž][a-zA-ZÀ-ž ()-]*$/.test(name) || !(Number(strength)>0) || !/^\d+(\.\d+)?$/.test(strength) ||
         !/^(QD-AM|QD-PM|QD-OTHER|QHS|BID|TID)( \+ PRN)?$|^PRN$/.test(freq) ||
         (/^QD-OTHER\b/.test(freq) && !String(p.notes||'').trim()) ||
-        (p.stock && !dose) || dose.length > 60)) ||
+        !dose || dose.length > 60)) ||
         (stopDate && (!/^\d{4}-\d{2}-\d{2}$/.test(stopDate)||stopDate>today||!off))) throw Error('Invalid medication details');
     const row=Object.assign({},anchor.row,{Med_ID:prefix+(i+1), Patient_ID:patient, Medication:active ? name+' '+strength+' mg tablets' : name,
       Dose:/^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(dose) ? dose + ' mg' : dose, Frequency:freq, Action:active?'CONFIRMED_ACTIVE':off?'CONFIRMED_OFF':'UNRESOLVED',

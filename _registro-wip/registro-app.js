@@ -491,16 +491,20 @@ function addNpMedRow() {
         <label class="np-label">${en?'Notes':'Notas'}</label>
         <input type="text" class="npMedNotes" placeholder="${en?'Optional':'Opcional'}" style="${inputSt}"/>
       </div>
+      <label style="grid-column:1/-1;"><input type="checkbox" class="npMedExternal"> ${t('med_managed_external')}</label>
     </div>
   `;
   // Wire up "Other" toggle
   const sel = div.querySelector('.npMedSel');
   const other = div.querySelector('.npMedOther');
   const medAction = div.querySelector('.npMedAction');
+  const external = div.querySelector('.npMedExternal');
   const syncDose = bindMedicationFields(div.querySelector('.npMedDose'), div.querySelector('.npMedFreq'),
-    div.querySelector('.npMedNotes'), () => sel.value, () => medAction.value);
+    div.querySelector('.npMedNotes'), () => sel.value, () => medAction.value,
+    {prn:div.querySelector('.npMedPRN'), external:() => external.checked});
   sel.addEventListener('change', syncDose);
   medAction.addEventListener('change', syncDose);
+  external.addEventListener('change', syncDose);
   sel.addEventListener('change', () => {
     const isOther = sel.value === '__other__';
     other.style.display = isOther ? 'block' : 'none';
@@ -518,8 +522,10 @@ async function submitNewPatient(skipDupCheck=false) {
   for (const product of document.querySelectorAll('.npMedSel')) {
     if (!product.value) continue;
     const row = product.closest('.np-med-row');
-    const error = medicationEntryError(product.value, row.querySelector('.npMedAction')?.value,
-      row.querySelector('.npMedDose')?.value, row.querySelector('.npMedFreq')?.value, row.querySelector('.npMedNotes')?.value);
+    const frequency = row.querySelector('.npMedFreq').value || (row.querySelector('.npMedPRN').checked ? 'PRN' : '');
+    const error = medicationEntryError(row.querySelector('.npMedAction').value,
+      row.querySelector('.npMedDose').value, frequency, row.querySelector('.npMedNotes').value,
+      row.querySelector('.npMedExternal').checked);
     if (error) { reenable(); showToast(error, {variant:'warn'}); return; }
   }
   const name = document.getElementById('npName').value.trim();
@@ -671,6 +677,7 @@ async function submitNewPatient(skipDupCheck=false) {
       Prescriber: mr.querySelector('.npMedPresc')?.value || '',
       Reason: '',
       Notes: mr.querySelector('.npMedNotes')?.value.trim() || '',
+      Is_External: mr.querySelector('.npMedExternal').checked ? 'TRUE' : '',
       Created_By: STATE.user || 'unknown',
       Created_At: now,
       Schema_Version: '1.0',

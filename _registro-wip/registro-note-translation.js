@@ -45,6 +45,36 @@
     note.append(output, controls);
   }
 
+  function readTranslation(text) {
+    if (!translated.has(text)) {
+      detector ||= LanguageDetector.create();
+      translator ||= Translator.create({sourceLanguage: 'es', targetLanguage: 'en'});
+      const result = Promise.all([detector, translator]).then(async ([languageDetector, spanishTranslator]) => {
+        const [language] = await languageDetector.detect(text);
+        return language?.detectedLanguage?.split('-')[0] === 'es' ? spanishTranslator.translate(text) : null;
+      }).catch(error => {
+        translated.delete(text);
+        detector = undefined;
+        translator = undefined;
+        throw error;
+      });
+      translated.set(text, result);
+    }
+    return translated.get(text);
+  }
+
+  async function translateWithin(root) {
+    if (!enabled || getLang() !== 'en') return;
+    for (const note of root.querySelectorAll('[data-chart-note]')) {
+      try {
+        const result = await readTranslation(note.dataset.chartNote);
+        if (enabled && getLang() === 'en' && note.isConnected && result) displayTranslation(note, result);
+      } catch {
+        return;
+      }
+    }
+  }
+
   async function updateNotes() {
     const current = ++revision;
     const notes = [...chart.querySelectorAll('[data-chart-note]')];
@@ -56,18 +86,9 @@
     if (!enabled || getLang() !== 'en' || !notes.length) return;
     status.textContent = t('notes_translate_wait');
     try {
-      detector ||= LanguageDetector.create();
-      translator ||= Translator.create({sourceLanguage: 'es', targetLanguage: 'en'});
-      const [languageDetector, spanishTranslator] = await Promise.all([detector, translator]);
       for (const note of notes) {
         if (revision !== current) return;
-        const text = note.dataset.chartNote;
-        if (!translated.has(text)) {
-          const [language] = await languageDetector.detect(text);
-          const matches = language?.detectedLanguage?.split('-')[0] === 'es';
-          translated.set(text, matches ? await spanishTranslator.translate(text) : null);
-        }
-        const result = translated.get(text);
+        const result = await readTranslation(note.dataset.chartNote);
         if (revision === current && note.isConnected && result) displayTranslation(note, result);
       }
       if (revision === current) status.textContent = '';
@@ -89,6 +110,6 @@
     void updateNotes();
   });
   new MutationObserver(() => void updateNotes()).observe(chart, {childList: true});
-  window.visitNoteTranslation = {updateControl};
+  window.visitNoteTranslation = {updateControl,translateWithin};
   updateControl();
 })();

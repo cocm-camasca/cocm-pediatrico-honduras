@@ -10,6 +10,8 @@
 .med-dialog label { display: grid; gap: .2rem; min-width: 0; }
 .med-dialog input, .med-dialog select, .med-dialog textarea { font: inherit; padding: .4rem; min-width: 0; color: inherit; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 .med-dialog .med-fields { display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:.6rem; }
+.med-dialog .med-prn-label { display: flex; align-items: center; gap: .4rem; align-self: start; }
+.med-dialog .med-prn-label input { width: 14px; height: 14px; padding: 0; margin: 0; }
 .med-dialog [hidden] { display:none !important; }
 .med-dialog .med-actions-bar { display:flex; flex-wrap:wrap; gap:.5rem; margin:.7rem 0; }
 .med-dialog pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:.9rem; tab-size:4; }

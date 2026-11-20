@@ -1175,7 +1175,7 @@ const MED_FORMULARY = [
 const MED_FREQ_PRESETS = [
   { v:'QD-AM',  en:'Daily, every morning',  es:'Diario, cada mañana' },
   { v:'QD-PM',  en:'Daily, every evening',  es:'Diario, cada noche' },
-  { v:'QD-OTHER', en:'Daily, other timing', es:'Diario, otro horario' },
+  { v:'QD-OTHER', en:'Daily', es:'Diario' },
   { v:'QHS',    en:'QHS, before bed',       es:'QHS, al acostarse' },
   { v:'BID',    en:'BID',                   es:'BID (2 veces al día)' },
   { v:'TID',    en:'TID',                   es:'TID (3 veces al día)' },
@@ -1189,19 +1189,30 @@ function formularyStrength(medication) {
   return item ? Number(item.match(/(\d+(?:\.\d+)?) mg$/)[1]) : 0;
 }
 
-function medicationEntryError(medication, action, dose, frequency, notes) {
-  if (/^(?:stop|hold|confirmed_off)$/i.test(action)) return '';
-  if (formularyStrength(medication) && !String(dose || '').trim()) return t('med_formulary_dose_required');
+function medicationEntryError(action, dose, frequency, notes, external = false) {
+  if (!medicationNeedsDirections(action)) return '';
+  if (!external && !String(dose || '').trim()) return t('med_dose_required');
+  if (!external && !String(frequency || '').trim()) return t('med_frequency_required');
   if (/^QD-OTHER(?: \+ PRN)?$/i.test(frequency) && !String(notes || '').trim()) return t('med_other_timing_notes');
   return '';
 }
 
-function bindMedicationFields(dose, frequency, notes, medication, action) {
+function medicationNeedsDirections(action) {
+  return !/^(?:stop|hold|confirmed_off|unresolved)$/i.test(action);
+}
+
+function bindMedicationFields(dose, frequency, notes, medication, action, options = {}) {
   dose.type = 'text';
   dose.inputMode = 'decimal';
+  const shell = document.createElement('span');
+  shell.style.cssText = 'position:relative;display:block;min-width:0';
+  dose.before(shell);
+  shell.append(dose);
+  dose.style.width = '100%';
+  const originalPadding = dose.style.paddingRight;
   const controls = document.createElement('span');
-  controls.style.cssText = 'display:inline-flex;gap:4px;margin-top:4px';
-  dose.parentElement.after(controls);
+  controls.style.cssText = 'position:absolute;inset-inline-end:2rem;top:50%;transform:translateY(-50%);gap:2px';
+  shell.append(controls);
   const step = direction => {
     const increment = formularyStrength(medication()) / 2;
     if (!increment) return;
@@ -1214,6 +1225,7 @@ function bindMedicationFields(dose, frequency, notes, medication, action) {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'ghost';
+    button.style.cssText = 'padding:0 3px;min-width:0;line-height:1.4';
     button.textContent = direction < 0 ? '↓' : '↑';
     button.setAttribute('aria-label', t(label));
     button.onclick = () => step(direction);
@@ -1227,15 +1239,19 @@ function bindMedicationFields(dose, frequency, notes, medication, action) {
   });
   const originalPlaceholder = notes.placeholder;
   const sync = () => {
-    const active = !/^(?:stop|hold|confirmed_off|unresolved)$/i.test(action());
+    const active = medicationNeedsDirections(action());
+    const required = active && !options.external?.();
     const otherTiming = active && frequency.value === 'QD-OTHER';
     controls.hidden = !active || !formularyStrength(medication());
     controls.style.display = controls.hidden ? 'none' : 'inline-flex';
-    dose.required = active && !!formularyStrength(medication());
+    dose.style.paddingRight = controls.hidden ? originalPadding : '4.5rem';
+    dose.required = required;
+    frequency.required = required && !options.prn?.checked;
     notes.required = otherTiming;
     notes.placeholder = otherTiming ? t('med_other_timing_notes') : originalPlaceholder;
   };
   frequency.addEventListener('change', sync);
+  options.prn?.addEventListener('change', sync);
   sync();
   return sync;
 }
