@@ -6,6 +6,8 @@
    ============================================================ */
 
 const REG_I18N = {
+  visit_note_expand: { en: '▼ Show full note', es: '▼ Ver nota completa' },
+  visit_note_collapse: { en: '▲ Collapse', es: '▲ Colapsar' },
   visit_edited: { en: '(edited)', es: '(editado)' },
   visit_duplicate_warning: { en: 'This chart already has a matching entry on that date. Save another entry?', es: 'Esta ficha ya tiene un registro igual en esa fecha. ¿Guardar otro registro?' },
   med_formulary_dose_required: { en: 'Enter the prescribed dose for this formulary medication.', es: 'Ingrese la dosis prescrita para este medicamento del formulario.' },

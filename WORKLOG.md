@@ -217,3 +217,9 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: GitHub Pages released 6a293f7. Verified the protected chart on desktop Chrome, inline translation and Show original, the switch-off behavior, the 50 mg product stepping to 25 mg, typed alternate doses, and the Daily, other timing note prompt. Verified the dashboard status labels and report button.
 - Completed: Atomically backed up and deleted 45 same-ID visit copies with matching clinical data. Verified the backup values and original row numbers and that the other 427 live visit rows are identical. The backup tab uses the registry workbook's existing access.
 - Blockers/notes: Visit retry behavior passed simulated tests. No new clinical visit was written for verification. Supply-source filtering awaits an explicit dispensing-source field. Different-ID and conflicting visit rows were left for clinical review.
+
+### 2026-11-20 - Codex desktop - Visit note expansion and duplicate follow-up
+- Completed: Identified four additional live charts with matching free-text visit records under different IDs. Excluded note presets and shared documentation attached to distinct screening tools.
+- Completed: Changed the chart to measure the rendered note before showing its expansion control. Syntax and ten report regression tests passed.
+- In progress: Verify the updated live chart after Pages publishes.
+- Blockers/notes: The audit was read-only. No clinical records were changed.

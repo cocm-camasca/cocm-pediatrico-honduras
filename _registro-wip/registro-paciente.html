@@ -702,6 +702,23 @@
     /* Hide the safety + brigade hidden <option> entries from the status select */
     #filterStatus option[hidden] { display: none; }
     /* Note markdown rendering */
+    .vnote-text {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+    }
+    .vnote-text.vnote-expanded { display: block; overflow: visible; }
+    .vnote-expand-btn {
+      background: none;
+      border: 0;
+      padding: 0;
+      margin-top: 2px;
+      color: var(--color-primary);
+      font: inherit;
+      cursor: pointer;
+    }
     .visit-row .vnote strong { font-weight: 700; color: var(--color-text); }
     .visit-row .vnote em { font-style: italic; color: var(--color-text); }
     .cocm-row .bhcm-note strong { font-weight: 700; color: var(--color-text); }
@@ -712,7 +729,7 @@
 <div id="regToastHost"></div>
 
 <link rel="stylesheet" href="registro-med-dialog.css?v=review1">
-<script src="registro-i18n.js?v=20261120notes"></script>
+<script src="registro-i18n.js?v=20261120overflow"></script>
 <script src="registro-data.js?v=20261120forms"></script>
 <script type="module">
   import * as medicationHistory from './registro-med-history.mjs?v=20261120forms';
@@ -721,7 +738,7 @@
   window.medReview = review;
 </script>
 <script src="registro-note-translation.js?v=20261120notes"></script>
-<script src="registro-paciente.js?v=20261120notes"></script>
+<script src="registro-paciente.js?v=20261120overflow"></script>
 <script>
 (() => {
   const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;

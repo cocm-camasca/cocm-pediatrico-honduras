@@ -418,6 +418,7 @@ function render() {
       ${renderMeds(lang)}
     </div>
   `;
+  observeVisitNoteOverflow();
 }
 
 // ═════════════════════════════════════════════════════════════════
@@ -947,7 +948,7 @@ function renderVisits(lang) {
       <div class="vtier">${en?'Tier':'Nivel'}</div>
       <div class="vedit"></div>
     </div>`;
-  return `<div class="visit-timeline">` + header + PSTATE.visits.map(v => {
+  return `<div class="visit-timeline">` + header + PSTATE.visits.map((v, index) => {
     const tier = scoreToTier(v.Score, PSTATE.tools[v.Tool]);
     const tierCls = TIER_CLASS[tier] || 'tier-nodata';
     const tierLbl = translateTier(tier);
@@ -966,18 +967,9 @@ function renderVisits(lang) {
     const editBtn = `<button class="vedit-btn" onclick="openEditVisitModal('${escapeHtml(v.Visit_ID)}')" title="${en?'Edit visit':'Editar visita'}">✎</button>`;
     const deleteBtn = `<button class="ghost" style="padding:4px 8px;font-size:var(--text-xs);color:var(--color-error);border-color:var(--color-error);" onclick="confirmDeleteVisit('${escapeHtml(v.Visit_ID)}')" title="${en?'Delete':'Eliminar'}">🗑</button>`;
     const noteHtml = v.Visit_Note ? renderMarkdownInline(v.Visit_Note) : '';
-    const noteId = `vnote-${escapeHtml(v.Visit_ID)}`;
-    const longNote = v.Visit_Note && v.Visit_Note.length > 120;
-    const noteInner = longNote
-      ? `<span class="vnote-preview" id="${noteId}-preview" style="display:block;">`
-        + `<span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${noteHtml}</span>`
-        + `<button class="vnote-expand-btn" onclick="toggleNoteExpand('${noteId}')" style="background:none;border:none;padding:0;color:var(--color-primary);font-size:inherit;cursor:pointer;margin-top:2px;">${en?'▼ Show full note':'▼ Ver nota completa'}</button>`
-        + `</span>`
-        + `<span class="vnote-full" id="${noteId}-full" style="display:none;">`
-        + noteHtml
-        + `<button class="vnote-expand-btn" onclick="toggleNoteExpand('${noteId}')" style="background:none;border:none;padding:0;color:var(--color-primary);font-size:inherit;cursor:pointer;margin-top:2px;display:block;">${en?'▲ Collapse':'▲ Colapsar'}</button>`
-        + `</span>`
-      : noteHtml;
+    const noteId = `vnote-${index}`;
+    const noteInner = `<div class="vnote-text" id="${noteId}">${noteHtml}</div>
+      <button type="button" class="vnote-expand-btn" aria-controls="${noteId}" aria-expanded="false" hidden>${t('visit_note_expand')}</button>`;
     return `
       <div class="visit-row${isScore?' visit-row-score':''}">
         <div class="vdate">${v.Visit_Date}</div>
@@ -2563,15 +2555,26 @@ async function shareAllTools() { return shareSelectedTools(); }
 if (typeof window !== 'undefined') window.shareAllTools = shareAllTools;
 
 // ── Visit note expand/collapse ────────────────────────────────
-function toggleNoteExpand(noteId) {
-  const preview = document.getElementById(noteId + '-preview');
-  const full    = document.getElementById(noteId + '-full');
-  if (!preview || !full) return;
-  const expanded = full.style.display !== 'none';
-  preview.style.display = expanded ? 'block' : 'none';
-  full.style.display    = expanded ? 'none'  : 'block';
+let visitNoteObserver;
+function observeVisitNoteOverflow() {
+  visitNoteObserver?.disconnect();
+  visitNoteObserver = new ResizeObserver(entries => {
+    for (const {target: note} of entries) {
+      if (note.clientHeight && !note.classList.contains('vnote-expanded')) {
+        note.nextElementSibling.hidden = note.scrollHeight <= note.clientHeight + 1;
+      }
+    }
+  });
+  document.querySelectorAll('#patBody .vnote-text').forEach(note => {
+    const button = note.nextElementSibling;
+    button.onclick = () => {
+      const expanded = note.classList.toggle('vnote-expanded');
+      button.setAttribute('aria-expanded', String(expanded));
+      button.textContent = t(expanded ? 'visit_note_collapse' : 'visit_note_expand');
+    };
+    visitNoteObserver.observe(note);
+  });
 }
-if (typeof window !== 'undefined') window.toggleNoteExpand = toggleNoteExpand;
 
 // ════════════════════════════════════════════════════════════════
 // LOG SCORE MODAL (Entry_Type='score' — no visit, no SI checkbox)
