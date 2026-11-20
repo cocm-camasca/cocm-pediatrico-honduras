@@ -1020,6 +1020,8 @@ function renderMeds(lang) {
   return PSTATE.meds.map(m => {
     const freqPart = m.Frequency ? ` <span style="color:var(--color-text-muted);font-weight:400;">· ${escapeHtml(translateMedFreq(m.Frequency))}</span>` : '';
     const notesLine = m.Notes ? `<div class="mnotes" style="grid-column:1 / -1;">${renderChartNote(m.Notes)}</div>` : '';
+    const creator = m.Created_By ? getUserDisplayName(m.Created_By, PSTATE.authorizedUsers) : '';
+    const creatorLine = creator ? `<div class="vcreator mcreator">— ${escapeHtml(creator)}</div>` : '';
     const isExternal = String(m.Is_External || '').toUpperCase() === 'TRUE';
     const extBadge = isExternal
       ? `<span style="display:inline-block;margin-left:6px;padding:1px 7px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border-radius:var(--radius-sm);background:color-mix(in srgb,var(--color-warning) 18%,transparent);color:var(--color-warning);border:1px solid color-mix(in srgb,var(--color-warning) 40%,transparent);">${en?'EXTERNAL':'EXTERNO'}${m.External_Provider?` · ${escapeHtml(m.External_Provider)}`:''}</span>`
@@ -1054,6 +1056,7 @@ function renderMeds(lang) {
       ${metaLine}
       ${notesLine}
       ${medActionBtns}
+      ${creatorLine}
     </div>
     `;
   }).join('');
