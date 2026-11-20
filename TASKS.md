@@ -7,7 +7,9 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
-- [~] Live medication correction and bilingual report verification complete. Await clinic confirmation of stocked strengths, dosage forms, tablet splitting and outside supply before revising the entry dialog and review rules.
+- [x] Released inline visit-note translation, half-tablet dose controls, daily other timing, status labels, visit retry protection, and audit-based edit badges.
+- [x] Removed 45 exact repeated visit rows after storing their values and original positions in a rollback tab in the registry workbook.
+- [ ] Decide how to record medication supply source before excluding externally supplied medications from ordering totals and supply correction flags.
 - [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
