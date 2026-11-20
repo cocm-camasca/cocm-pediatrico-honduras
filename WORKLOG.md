@@ -1,4 +1,4 @@
-﻿# Worklog
+# Worklog
 
 This file records completed Codex work sessions for CoCM Pediatric Honduras Registry. Append new entries during the shutdown routine so future sessions can resume without prior chat context.
 
@@ -221,5 +221,5 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 ### 2026-11-20 - Codex desktop - Visit note expansion and duplicate follow-up
 - Completed: Identified four additional live charts with matching free-text visit records under different IDs. Excluded note presets and shared documentation attached to distinct screening tools.
 - Completed: Changed the chart to measure the rendered note before showing its expansion control. Syntax and ten report regression tests passed.
-- In progress: Verify the updated live chart after Pages publishes.
+- Completed: Pages published b2bfe38. On the protected site, verified that nine previously eligible notes had no redundant expansion control at the tested width and a genuinely clipped note expanded and collapsed.
 - Blockers/notes: The audit was read-only. No clinical records were changed.
