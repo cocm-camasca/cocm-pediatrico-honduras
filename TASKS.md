@@ -7,10 +7,7 @@
 - [!] Blocked - include reason in parentheses
 
 ## Active Tasks
-- [x] Released inline visit-note translation, half-tablet dose controls, daily other timing, status labels, visit retry protection, and audit-based edit badges.
-- [x] Removed 45 exact repeated visit rows after storing their values and original positions in a rollback tab in the registry workbook.
-- [ ] Decide how to record medication supply source before excluding externally supplied medications from ordering totals and supply correction flags.
-- [~] Keep CoCM on a no-code maintenance / verification track unless a specific production need is identified.
+- [~] Monitor the production registry and respond to clinic feedback as needed.
 - [~] Confirm live serving chain: Cloudflare Access -> Cloudflare proxy/DNS -> GitHub Pages -> browser JS -> Apps Script -> Google Sheets.
 - [~] Verify `registry.cocm-camasca.org/_registro-wip/registro.html` stops serving stale `registro-app.js?v=85d5c82` and picks up the published mobile-label fix at `419edac`.
 
@@ -23,7 +20,6 @@
 - [ ] Verify `Subscale_Score` vs `Subscale_Scores` naming across front end, Apps Script, and Sheet header.
 - [ ] Decide on Cloudflare Pages migration.
 - [ ] Decide whether Drive folder per patient is still desired.
-- [ ] Update audit/help text in `registro-i18n.js` for patient page med Edit button and Suggestions section.
 - [ ] Resolve `_registro-wip/_headers` anomaly.
 - [ ] Review undocumented `make_placeholders.py`.
 - [ ] Verify the pediatric psychometric `TOOL_URLS` map against root scoring files and external `*-ext.html` variants.
@@ -31,6 +27,10 @@
 - [ ] Clinically recheck pediatric screening thresholds, age routing, bilingual labels, and follow-up guidance.
 
 ## Completed (last 30 days)
+- [x] Added patient names next to linked IDs in the medication overview and refreshed both bilingual registry help cards.
+- [x] Released medication Update, historical labels, entry attribution, inline note translation, dose controls, and clearer report buttons.
+- [x] Released visit retry protection, audit-based edit badges, and overflow-based note expansion.
+- [x] Removed 52 confirmed duplicate visit rows after backing them up. Verified the retained chart records and scores.
 - [x] Add chart links and a separate fluoxetine/sertraline reconciliation section to the supply CSV. Show the same warning on the chart and append dated change and stop events to medication history.
 - [x] Published the 30-day medication supply CSV (S-0004) and verified a test-dataset download from the signed-in registry.
 - [x] Dr. Fowler approved the live descriptive status selectors; closed Nick Ladd's registry report `S-0003` in `Sugerencias` with a verified resolution record.
@@ -49,6 +49,7 @@
 - [x] Published and protected-host retested the patient-page stability fixes for visit dialogs, score-only modal reset, and score-trend/history controls.
 
 ## Backlog
+- [ ] Decide how to record dispensing source before excluding externally supplied medication from ordering totals and supply flags.
 - [ ] Review the patient-page "no visit for X days" prompt for Therapy only and Transferred patients; it is separate from the status-label update.
 - [ ] Fix Aurora/Auora patient name typo via Edit Patient UI when safely accessing that record.
 - [ ] Audit `Auditoria` for any client writes that attempted fields dropped by schema drift.

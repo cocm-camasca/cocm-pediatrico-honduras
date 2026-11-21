@@ -56,7 +56,8 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
   const cutoff = priorYear(today);
   const activity = chartActivity(patients, visits, meds, audit, tables, today);
   const groups = groupPatients(meds), totals = new Map(), review = [], overlaps = [], overviewRows = [];
-  for (const id of [...new Set(patients.map(p=>p.Patient_ID).filter(Boolean))].sort()) {
+  const patientsById = new Map(patients.filter(patient => patient.Patient_ID).map(patient => [patient.Patient_ID, patient]));
+  for (const id of [...patientsById.keys()].sort()) {
     const entries = groups.get(id);
     if (!entries) continue;
     const last = activity.get(id), inWindow = !!last && last >= cutoff;
@@ -74,7 +75,8 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
       });
       for (const i of issues) if (!current.some(c=>c.name===i.label)) lines.push(i.label || tr('supply_unknown'));
       if (!lines.length && !overlap) continue;
-      overviewRows.push([patientCell(id),lines.join('\n') || tr('med_none_current'),
+      const patientName = String(patientsById.get(id).Patient_Name ?? '').trim();
+      overviewRows.push([patientCell(id),patientName,lines.join('\n') || tr('med_none_current'),
         !last ? tr('med_unknown') : tr(inWindow?'med_yes':'med_no'),[reasons,overlap && tr('ssri_review_title')].filter(Boolean).join(' / ')]);
       continue;
     }
@@ -98,7 +100,7 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
   const rows = [[tr(overview?'med_overview':'supply_title'),today]];
   if (test) rows.push([tr('supply_test')]);
   const hint = [tr('med_link_hint')];
-  if (overview) return [...rows,hint,['supply_id','med_directions','med_window','med_review_notes'].map(tr),...overviewRows];
+  if (overview) return [...rows,hint,['supply_id','med_patient_name','med_directions','med_window','med_review_notes'].map(tr),...overviewRows];
   if (review.length) rows.push([tr('supply_partial')]);
   rows.push(['supply_med','supply_strength','supply_tablets','supply_people','supply_prn'].map(tr));
   for (const r of [...totals.values()].sort((a,b)=>a.name.localeCompare(b.name)||a.strength-b.strength)) {
@@ -148,7 +150,10 @@ export function reportText(rows,overview) {
   const pre=document.createElement('pre');
   for (const row of rows) {
     if (overview && row[0] instanceof PatientChartLink) {
-      append(row[0]); pre.append('\n'+String(row[1]).split('\n').map(s=>'  '+s).join('\n')+'\n  '+t('med_window')+' · '+row[2]+(row[3]?'\n  '+row[3]:'')+'\n\n');
+      const [chart, name, directions, activity, review] = row;
+      append(chart);
+      if (name) pre.append(' · ' + name);
+      pre.append('\n'+String(directions).split('\n').map(s=>'  '+s).join('\n')+'\n  '+t('med_window')+' · '+activity+(review?'\n  '+review:'')+'\n\n');
     } else {
       row.forEach((cell,i)=>{ if(i)pre.append('\t'); append(cell); }); pre.append('\n');
     }

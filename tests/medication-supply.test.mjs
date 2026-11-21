@@ -85,12 +85,21 @@ test('both reports use the latest directions and omit regimens that end with a h
   const continued = med({Med_ID:'M5', Date:'2026-04-01', Action:'CONTINUE', Dose:'5 mg', Frequency:'QD-AM'});
   const history = [original, prn, increased, decreased, continued];
   assert.deepEqual(rows(history).at(-1), ['Fluoxetine',20,7.5,1,0]);
-  assert.deepEqual(rows(history,{overview:true}).at(-1).slice(0,2), ['P1','Fluoxetine (20 mg) · 5 mg · QD-AM']);
+  assert.deepEqual(rows(history,{overview:true}).at(-1).slice(0,3), ['P1','','Fluoxetine (20 mg) · 5 mg · QD-AM']);
   for (const Action of ['HOLD','STOP']) {
     const inactive = [...history, med({Med_ID:'M6', Date:'2026-05-01', Action, Dose:'', Frequency:''})];
     assert.equal(rows(inactive).some(row=>row[0]==='Fluoxetine'), false);
     assert.equal(rows(inactive,{overview:true}).some(row=>row[0]==='P1'), false);
   }
+});
+
+test('the overview includes the patient name immediately after the ID', () => {
+  const patients = [{Patient_ID:'P1',Patient_Name:'Ana, "López"'}];
+  const overview = rows([med()], {patients,overview:true});
+  assert.deepEqual(overview.at(-2).slice(0,2), ['supply_id','med_patient_name']);
+  assert.deepEqual(overview.at(-1).slice(0,2), ['P1','Ana, "López"']);
+  assert.match(csvText(overview), /"P1","Ana, ""López"""/);
+  assert.ok(!rows([med()], {patients}).flat().includes(patients[0].Patient_Name));
 });
 
 test('audit timestamps use Honduras calendar dates and attributable deleted visits count', () => {
