@@ -19,7 +19,7 @@ let STATE = {
 };
 
 window.openMedicationReport = async function(overview) {
-  try { const {openReport}=await import('./registro-report-ui.mjs?v=20261120forms'); openReport(overview); }
+  try { const {openReport}=await import('./registro-report-ui.mjs?v=20261120medupdate'); openReport(overview); }
   catch { showToast(t('supply_failed'),{variant:'error'}); }
 };
 

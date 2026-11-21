@@ -1,4 +1,4 @@
-import {analyzeMedications,reviewReason,historySnapshot} from './registro-med-review.mjs?v=20261120forms';
+import {analyzeMedications,reviewReason,historySnapshot} from './registro-med-review.mjs?v=20261120medupdate';
 import {product,normalize,hondurasDate} from './registro-med-history.mjs?v=20261120forms';
 
 const splitNames = raw => String(raw || '').split(/\s+(?:and|y)\s+|[,;](?!\d)|\s*[&+]\s*/i).map(v=>v.trim()).filter(Boolean);

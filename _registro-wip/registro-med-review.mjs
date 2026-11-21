@@ -73,7 +73,10 @@ function regimen(events, today) {
         if (!m.Frequency) Object.assign(next, {times:current.times, prn:current.prn});
         next.strength ??= current.strength;
       }
-      if (extraPrn && change === 'change' && current.strength !== next.strength) {
+      if (['change','continue'].includes(change) && m.Dose && m.Frequency) {
+        // An explicitly restated regimen replaces earlier scheduled and PRN instructions.
+        extraPrn = false;
+      } else if (extraPrn && change === 'change' && current?.strength !== next.strength) {
         // The history doesn't say which product now supplies the separate PRN instruction.
         conflict = true;
         prior = {...event, change, next};

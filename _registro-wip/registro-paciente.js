@@ -1003,7 +1003,7 @@ function translateMedFreq(raw) {
 
 window.correctMedicationEntry = async function(targets) {
   try {
-    const {openCorrection}=await import('./registro-correction.mjs?v=20261120medui');
+    const {openCorrection}=await import('./registro-correction.mjs?v=20261120medupdate');
     await openCorrection(PSTATE.patient.Patient_ID,targets.split(','),rows=>{
       PSTATE.meds=rows.sort(window.medicationHistory.newestMedicationFirst);
       render();
@@ -1039,19 +1039,20 @@ function renderMeds(lang) {
     const issue=byId.get(m.Med_ID), archived=String(m.Action).startsWith('CORRECTED:');
     const medActionBtns = archived ? '' : `<div class="med-actions">
       ${issue ? `<button type="button" class="ghost" data-id="${escapeHtml(m.Med_ID)}" title="${escapeHtml(window.medReview.reviewReason([issue],t))}" onclick="correctMedicationEntry(this.dataset.id)">💊 ${t('med_correct')}</button>` : ''}
-      ${current.has(m.Med_ID) ? `<button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedModal(this.dataset.medId)">${t('med_continue')}</button>
-        <button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'change')">${t('med_event_change')}</button>
+      ${current.has(m.Med_ID) ? `<button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'update')">${t('med_event_update')}</button>
         <button type="button" class="ghost" data-med-id="${escapeHtml(m.Med_ID)}" onclick="openMedEvent(this.dataset.medId, 'stop')">${t('med_event_stop')}</button>` : ''}
       <button type="button" class="ghost" onclick="openEditMedModal('${escapeHtml(m.Med_ID)}')" title="${en?'Edit':'Editar'}" aria-label="${en?'Edit':'Editar'}">✏️</button>
       <button type="button" class="ghost" style="color:var(--color-error);border-color:color-mix(in srgb, var(--color-error) 35%, transparent);" onclick="confirmDeleteMed('${escapeHtml(m.Med_ID)}')" title="${en?'Delete':'Eliminar'}" aria-label="${en?'Delete':'Eliminar'}">🗑</button>
     </div>`;
     const stateLabel = {CONFIRMED_ACTIVE:'med_confirmed',CONFIRMED_OFF:'med_confirmed_off',UNRESOLVED:'med_unclear'}[m.Action];
     const actionLabel = archived ? t('med_corrected')+' · '+translateMedAction(m.Action.slice(10)) : stateLabel ? t(stateLabel) : translateMedAction(m.Action);
+    const historical = !archived && !issue && !current.has(m.Med_ID) &&
+      ['start','change','continue'].includes(window.medicationHistory.action(m.Action));
     return `
     <div class="med-row">
       <div class="mdate">${m.Date}</div>
       <div class="mmed">${escapeHtml(m.Medication)} ${m.Dose?`<span style="color:var(--color-text-muted);font-weight:400;">· ${escapeHtml(m.Dose)}</span>`:''}${freqPart}${extBadge}</div>
-      <div class="maction">${escapeHtml(actionLabel||'')}</div>
+      <div class="maction">${escapeHtml(actionLabel||'')}${historical ? ` · ${t('med_event_historical')}` : ''}</div>
       <div class="mpresc" style="grid-column:span 2;">${escapeHtml(m.Reason||'')}${m.Reason && m.Prescriber ? ' · ' : ''}${escapeHtml(m.Prescriber||'')}</div>
       ${metaLine}
       ${notesLine}
@@ -1813,23 +1814,32 @@ function openMedEvent(medId, mode, draft = {}) {
   dialog.className = 'med-event-dialog';
   dialog.setAttribute('aria-labelledby', 'medEventTitle');
   const eventId = 'M-' + crypto.randomUUID();
-  const initialFrequency = draft.Frequency ?? m.Frequency ?? '';
-  const base = initialFrequency.replace(/(?:\s*\+\s*)?\bPRN$/i, '').trim();
+  const name = window.medicationHistory.product(m.Medication)?.name;
+  const regimen = window.medReview.analyzeMedications(PSTATE.meds, today).current.find(item => item.name === name)?.state;
+  const currentDose = regimen?.dose != null ? regimen.dose + ' mg' : m.Dose || '';
+  const currentFrequency = regimen?.frequency || m.Frequency || '';
+  const initialFrequency = draft.Frequency ?? (
+    regimen?.prn && !/\bprn\b|as needed|seg[uú]n/i.test(currentFrequency)
+      ? [currentFrequency,'PRN'].filter(Boolean).join(' + ') : currentFrequency);
+  const base = initialFrequency.replace(/(?:\s*\+\s*)?\b(?:PRN|as needed|seg[uú]n (?:sea )?neces(?:idad|ario))$/i, '').trim();
   const presets = window.MED_FREQ_PRESETS || [];
   const options = presets.map(p => new Option(getLang() === 'en' ? p.en : p.es, p.v));
   if (base && !presets.some(p => p.v === base)) options.push(new Option(base, base));
   dialog.innerHTML = `<form>
-    <h3 id="medEventTitle">${t(stop ? 'med_event_stop_title' : 'med_event_change_title')}</h3>
+    <h3 id="medEventTitle">${t(stop ? 'med_event_stop_title' : 'med_event_update_title')}</h3>
     <p><strong>${escapeHtml(m.Medication)}</strong> · ${escapeHtml(m.Dose)} ${escapeHtml(translateMedFreq(m.Frequency))}</p>
     <label>${t('med_event_date')}<input type="date" name="date" required></label>
     ${stop ? '' : `<label>${t('label_action')}<select name="direction" required>
       <option value="">${t('med_event_direction')}</option>
+      <option value="CONTINUE">${t('med_continue')}</option>
       <option value="INCREASE">${t('med_increase')}</option><option value="DECREASE">${t('med_decrease')}</option>
+      <option value="HOLD">${t('med_hold')}</option>
     </select></label>
+    <fieldset data-med-directions style="display:grid;gap:8px;border:0;padding:0;min-width:0">
     <label>${t('label_dose')} (mg)<input name="dose"></label>
     <label>${t('label_frequency')}<select name="frequency"><option value="">—</option></select></label>
     <label class="event-prn"><input type="checkbox" name="prn"> PRN</label>
-    <label>${t('label_prescriber')}<input name="prescriber"></label>`}
+    <label>${t('label_prescriber')}<input name="prescriber"></label></fieldset>`}
     <label>${t('med_event_notes')}<textarea name="notes" rows="2"></textarea></label>
     <span role="alert"></span>
     <div class="modal-footer"><button type="button" class="ghost" data-cancel-med-event>${t('med_event_cancel')}</button>
@@ -1842,13 +1852,20 @@ function openMedEvent(medId, mode, draft = {}) {
   fields.date.min = window.medicationHistory.day(m.Date || m.Start_Date);
   fields.notes.value = draft.Notes || '';
   if (!stop) {
-    fields.dose.value = String(draft.Dose ?? m.Dose ?? '').replace(/\s*mg$/i, '');
+    fields.dose.value = String(draft.Dose ?? currentDose).replace(/\s*mg$/i, '');
     fields.frequency.append(...options);
     fields.frequency.value = base;
-    fields.prn.checked = /\bPRN$/i.test(initialFrequency);
+    fields.prn.checked = /\bPRN\b|as needed|seg[uú]n/i.test(initialFrequency);
     fields.prescriber.value = draft.Prescriber ?? m.Prescriber ?? '';
-    bindMedicationFields(fields.dose, fields.frequency, fields.notes, () => m.Medication, () => 'change',
+    const syncFields = bindMedicationFields(fields.dose, fields.frequency, fields.notes, () => m.Medication,
+      () => fields.direction.value,
       {prn:fields.prn, external:() => external});
+    const directions = form.querySelector('[data-med-directions]');
+    fields.direction.addEventListener('change', () => {
+      directions.disabled = directions.hidden = fields.direction.value === 'HOLD';
+      directions.style.display = directions.hidden ? 'none' : 'grid';
+      syncFields();
+    });
   }
   const save = form.querySelector('[type=submit]'), cancel = form.querySelector('[data-cancel-med-event]');
   cancel.onclick = () => dialog.close();
@@ -1857,18 +1874,20 @@ function openMedEvent(medId, mode, draft = {}) {
   form.onsubmit = async e => {
     e.preventDefault();
     if (save.disabled) return;
-    const dose = stop ? '' : fields.dose.value.trim();
-    const frequency = stop ? '' : [fields.frequency.value, fields.prn.checked ? 'PRN' : ''].filter(Boolean).join(' + ');
-    const entryError = medicationEntryError(stop ? 'stop' : 'change', dose, frequency, fields.notes.value, external);
+    const action = stop ? 'STOP' : fields.direction.value;
+    const needsDirections = medicationNeedsDirections(action);
+    const dose = needsDirections ? fields.dose.value.trim() : '';
+    const frequency = needsDirections ? [fields.frequency.value, fields.prn.checked ? 'PRN' : ''].filter(Boolean).join(' + ') : '';
+    const entryError = medicationEntryError(action, dose, frequency, fields.notes.value, external);
     if (entryError) { feedback.textContent = entryError; return; }
     const doseText = /^\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?$/.test(dose) ? dose + ' mg' : dose;
-    if (!stop && ((!doseText && !frequency) || (doseText === (m.Dose || '') && frequency === (m.Frequency || '')))) {
+    if (['INCREASE','DECREASE'].includes(action) && ((!doseText && !frequency) || (doseText === currentDose && frequency === initialFrequency && !draft.Dose && !draft.Frequency))) {
       feedback.textContent = t('med_event_same'); return;
     }
     const row = {
       Med_ID:eventId, Patient_ID:m.Patient_ID, Medication:m.Medication, Date:fields.date.value,
-      Action:stop ? 'STOP' : fields.direction.value, Dose:doseText, Frequency:frequency,
-      Prescriber:stop ? '' : fields.prescriber.value.trim(), Notes:fields.notes.value.trim(),
+      Action:action, Dose:doseText, Frequency:frequency,
+      Prescriber:needsDirections ? fields.prescriber.value.trim() : m.Prescriber || '', Notes:fields.notes.value.trim(),
       Created_By:PSTATE.user, Created_At:new Date().toISOString(), Schema_Version:'1.0',
       Is_External:m.Is_External || '', External_Provider:m.External_Provider || ''
     };
@@ -2087,7 +2106,7 @@ async function submitEditMed() {
       showToast(t('med_event_latest'), {variant:'warn'}); return;
     }
     closeEditMedModal();
-    openMedEvent(medId, 'change', {
+    openMedEvent(medId, 'update', {
       Dose:doseStr, Frequency:freq, Prescriber:updates.Prescriber,
       Notes:[updates.Reason !== (source.Reason || '') && updates.Reason,
         updates.Notes !== (source.Notes || '') && updates.Notes].filter(Boolean).join(' — ')

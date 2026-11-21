@@ -1,6 +1,6 @@
 // Loaded only when the dashboard's supply button is clicked.
 import {day, loggedDay, hondurasDate, hasDuplicateSsri} from './registro-med-history.mjs?v=20261120forms';
-import {analyzeMedications, groupPatients, reviewReason, chartUrl} from './registro-med-review.mjs?v=20261120forms';
+import {analyzeMedications, groupPatients, reviewReason, chartUrl} from './registro-med-review.mjs?v=20261120medupdate';
 
 function priorYear(date) {
   const year = Number(date.slice(0, 4)) - 1;
@@ -73,13 +73,14 @@ export function supplyRows({patients, visits, meds, audit, tables, today, transl
           directions+prn].filter(Boolean).join(' · ');
       });
       for (const i of issues) if (!current.some(c=>c.name===i.label)) lines.push(i.label || tr('supply_unknown'));
+      if (!lines.length && !overlap) continue;
       overviewRows.push([patientCell(id),lines.join('\n') || tr('med_none_current'),
         !last ? tr('med_unknown') : tr(inWindow?'med_yes':'med_no'),[reasons,overlap && tr('ssri_review_title')].filter(Boolean).join(' / ')]);
       continue;
     }
     if (!last) {
       const undated = entries.filter(m=>!String(m.Action).startsWith('CORRECTED:') && (!m.Date || day(m.Date)<=today));
-      if (undated.length && !issues.length) issues.push({label:undated[0].Medication,reason:'supply_activity',sources:[undated[0]]});
+      if (current.length && undated.length && !issues.length) issues.push({label:undated[0].Medication,reason:'supply_activity',sources:[undated[0]]});
     }
     if (issues.length) review.push([patientCell(id),reviewReason(issues,tr),correctionCell(id,issues)]);
     if (overlap) overlaps.push([patientCell(id),tr('ssri_pair')]);

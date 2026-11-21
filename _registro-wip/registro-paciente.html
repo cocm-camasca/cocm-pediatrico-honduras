@@ -126,7 +126,7 @@
     }
     .sec-card h2 {
       font-size: var(--text-lg); font-weight: 700; margin-bottom: 6px;
-      display: flex; justify-content: space-between; align-items: baseline;
+      display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2);
       border-bottom: 1px solid var(--color-divider); padding-bottom: 4px;
     }
 
@@ -743,16 +743,16 @@
 <div id="regToastHost"></div>
 
 <link rel="stylesheet" href="registro-med-dialog.css?v=20261120medui">
-<script src="registro-i18n.js?v=20261120medui"></script>
+<script src="registro-i18n.js?v=20261120medupdate"></script>
 <script src="registro-data.js?v=20261120medui"></script>
 <script type="module">
   import * as medicationHistory from './registro-med-history.mjs?v=20261120forms';
-  import * as review from './registro-med-review.mjs?v=20261120forms';
+  import * as review from './registro-med-review.mjs?v=20261120medupdate';
   window.medicationHistory = medicationHistory;
   window.medReview = review;
 </script>
 <script src="registro-note-translation.js?v=20261120medui"></script>
-<script src="registro-paciente.js?v=20261120medauthor"></script>
+<script src="registro-paciente.js?v=20261120medupdate"></script>
 <script>
 (() => {
   const suppressedMedReasonLabel = /^test[\s_-]*dx$/i;

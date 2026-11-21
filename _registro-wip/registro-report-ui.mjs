@@ -1,4 +1,4 @@
-import {prepareReport,downloadReport,reportText} from './registro-supply.mjs?v=20261120forms';
+import {prepareReport,downloadReport,reportText} from './registro-supply.mjs?v=20261120medupdate';
 
 export function openReport(overview) {
   const dialog=document.createElement('dialog');

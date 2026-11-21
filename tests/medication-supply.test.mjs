@@ -77,6 +77,22 @@ test('different ordering strengths remain separate and stopped drugs contribute 
   assert.equal(rows([med(),med({Date:'2026-02-01',Action:'STOP'})]).length,2);
 });
 
+test('both reports use the latest directions and omit regimens that end with a hold or stop', () => {
+  const original = med({Frequency:'QD-AM'});
+  const prn = med({Med_ID:'M2', Frequency:'PRN'});
+  const increased = med({Med_ID:'M3', Date:'2026-02-01', Action:'INCREASE', Dose:'20 mg', Frequency:'QD-AM'});
+  const decreased = med({Med_ID:'M4', Date:'2026-03-01', Action:'DECREASE', Dose:'5 mg', Frequency:'QD-AM'});
+  const continued = med({Med_ID:'M5', Date:'2026-04-01', Action:'CONTINUE', Dose:'5 mg', Frequency:'QD-AM'});
+  const history = [original, prn, increased, decreased, continued];
+  assert.deepEqual(rows(history).at(-1), ['Fluoxetine',20,7.5,1,0]);
+  assert.deepEqual(rows(history,{overview:true}).at(-1).slice(0,2), ['P1','Fluoxetine (20 mg) · 5 mg · QD-AM']);
+  for (const Action of ['HOLD','STOP']) {
+    const inactive = [...history, med({Med_ID:'M6', Date:'2026-05-01', Action, Dose:'', Frequency:''})];
+    assert.equal(rows(inactive).some(row=>row[0]==='Fluoxetine'), false);
+    assert.equal(rows(inactive,{overview:true}).some(row=>row[0]==='P1'), false);
+  }
+});
+
 test('audit timestamps use Honduras calendar dates and attributable deleted visits count', () => {
   const old = med({Date:'2020-01-01'});
   const audit = [{Tab:'Visitas', Row_ID:'gone', Action:'delete', Timestamp:'2025-11-18T05:59:00Z', Old_Value:'{"Patient_ID":"P1"}'}];
