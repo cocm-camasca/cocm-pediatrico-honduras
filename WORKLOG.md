@@ -223,3 +223,42 @@ This file records completed Codex work sessions for CoCM Pediatric Honduras Regi
 - Completed: Changed the chart to measure the rendered note before showing its expansion control. Syntax and ten report regression tests passed.
 - Completed: Pages published b2bfe38. On the protected site, verified that nine previously eligible notes had no redundant expansion control at the tested width and a genuinely clipped note expanded and collapsed.
 - Blockers/notes: The audit was read-only. No clinical records were changed.
+
+### 2026-11-20 - Codex desktop - Confirmed free-text visit duplicate cleanup
+- Completed: Removed seven owner-confirmed duplicate rows across five charts in one Sheets batch. Saved their values and original row numbers in the existing hidden rollback tab.
+- Completed: Re-read both tabs. Verified all 420 remaining visit rows match the expected contents, the related separate score remains, and all seven backed-up rows are intact.
+- Blockers/notes: No application code or deployment changes. Verification compared live Sheets data directly.
+
+### 2026-11-20 - Codex desktop - Translation control placement
+- Completed: Published 10382ba. Matched the translation button to the language-control font size, moved the appearance control beside text size, and placed Translate Spanish notes after the language selector.
+- Completed: Verified the protected chart displays the button in English only. Spanish mode showed originals while the preference was enabled, and switching back to English restored the preference.
+- Blockers/notes: No schema or Apps Script changes. Prior duplicate-cleanup notes remain local.
+
+### 2026-11-20 - Codex desktop - Translate more chart notes
+- Completed: Published b51f8de to extend the existing translation preference to the patient summary, last therapist contact and medication history notes.
+- Completed: Verified both requested sections and visit notes translate on the protected chart. Tested Show original and Show translation in both requested sections. Ten medication report regression tests passed.
+- Blockers/notes: Live verification was read-only. The local task and worklog edits remain pending.
+
+### 2026-11-20 - Codex desktop - Medication dialogs and continuation
+- Completed: Published a8e1870 to put half-tablet controls inside the dose field, validate active-medication directions, show Daily, align correction controls with medication entry, and translate original correction notes. Added the continuation action and a duplicate-start confirmation. Fixed Change cancellation and enabled action edits.
+- Completed: Recorded prior Pages revision b51f8de, the Cloudflare Access redirect, relay v12 and the medication header checkpoint. Added outside-provider fields to both medication tabs and the relay contract. Deployed v13 on the original URL and verified its health check.
+- Completed: Reconciled the explicitly authorized continuation in production and recorded the three revised fields in the audit tab. Verified the corrected history yields one active regimen without a supply issue. Tested the protected dialogs without saving test entries. Ten medication report tests passed.
+- Blockers/notes: Outside-provider metadata does not establish the dispensing source for ordering totals. Local task notes and worklog remain pending.
+
+### 2026-11-20 - Codex desktop - Medication entry attribution
+- Completed: Published ec27443. Medication history shows the stored entry author at the bottom of each row using the same display-name lookup and styling as visit history.
+- Completed: Verified on the protected chart that both existing medication rows show their recorded authors, including a continuation where the prescriber and entry author differ. Ten medication report regression tests passed.
+- Blockers/notes: Older rows without a recorded author have no author line. No clinical records changed.
+
+### 2026-11-20 - Codex desktop - Medication Update and report clarity
+- Completed: Published 7e7af9c. Added distinct report buttons and section-header spacing. Combined medication Continue and Change into Update with Continue, Increase, Decrease and Hold. Stop remains a separate dated action.
+- Completed: Earlier regimen entries display as historical. The reports use current directions, and the overview omits patients with no remaining current medication or unresolved medication issue.
+- Completed: Verified both report dialogs, header spacing, Update options and a historical row on the protected site. All eleven medication-report tests passed, including the new hold and stop coverage for both reports.
+- Blockers/notes: The live UI check was read-only. No clinical records or relay settings changed.
+
+### 2026-11-20 - Codex desktop - Medication overview and registry help closeout
+- Completed: Published ab30bab. The overview now includes patient names beside linked IDs in CSV and copyable text. The supply report remains ID-only.
+- Completed: Updated the main and chart help in English and Spanish for sign-in, patient creation, reports, visit entry, questionnaire sharing, medication workflows, desktop translation and suggestions.
+- Completed: Verified both help cards and the overview in the protected browser. All twelve medication report tests passed, including patient-name placement and CSV escaping.
+- Completed: Updated the existing unsent clinic handoff draft and moved completed release tasks into the completed list. Regular maintenance resumes pending clinic feedback. The explicit dispensing-source decision remains in the backlog.
+- Blockers/notes: No clinical records, spreadsheet fields or relay settings changed.
